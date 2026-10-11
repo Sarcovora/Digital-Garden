@@ -1,7 +1,7 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import { createStore } from "./gardenState"
-import { buildHomeModel, IndexEntry } from "./homeModel"
+import { buildHomeModel, listFolder, IndexEntry } from "./homeModel"
 
 const mem = () => {
   const m = new Map<string, string>()
@@ -12,9 +12,9 @@ const mem = () => {
   }
 }
 const index: IndexEntry[] = [
-  { slug: "a", title: "A", folder: "", modified: 10 },
-  { slug: "b", title: "B", folder: "Bible", modified: 30 },
-  { slug: "c", title: "C", folder: "01 - Projects", modified: 20 },
+  { slug: "a", title: "A", folder: "", path: "", modified: 10 },
+  { slug: "b", title: "B", folder: "Bible", path: "Bible", modified: 30 },
+  { slug: "c", title: "C", folder: "01 - Projects", path: "01 - Projects", modified: 20 },
 ]
 
 test("resume to a note that no longer exists is dropped (Review Focus 1)", () => {
@@ -50,4 +50,21 @@ test("resume carries the stored fraction and the current title when the note exi
 test("an empty index yields an empty home without throwing", () => {
   const m = buildHomeModel({ store: createStore(mem()), index: [] })
   assert.equal(m.resume, null); assert.deepEqual(m.pinned, []); assert.deepEqual(m.recents, [])
+})
+
+test("listFolder shows one level: subfolders with note counts, then notes directly inside", () => {
+  const idx: IndexEntry[] = [
+    { slug: "r", title: "Root note", folder: "", path: "", modified: 1 },
+    { slug: "a/x", title: "Zed", folder: "A", path: "A", modified: 1 },
+    { slug: "a/w", title: "Alpha", folder: "A", path: "A", modified: 1 },
+    { slug: "a/s/1", title: "Deep one", folder: "A", path: "A/S", modified: 1 },
+    { slug: "a/s/t/2", title: "Deeper", folder: "A", path: "A/S/T", modified: 1 },
+    { slug: "b/1", title: "B one", folder: "B", path: "B", modified: 1 },
+  ]
+  const top = listFolder(idx, "A")
+  assert.deepEqual(top.notes.map((n) => n.title), ["Alpha", "Zed"])
+  assert.deepEqual(top.folders, [{ name: "S", path: "A/S", count: 2 }])
+  const sub = listFolder(idx, "A/S")
+  assert.deepEqual(sub.folders, [{ name: "T", path: "A/S/T", count: 1 }])
+  assert.deepEqual(sub.notes.map((n) => n.title), ["Deep one"])
 })

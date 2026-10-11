@@ -14,8 +14,14 @@ const GardenChrome: QuartzComponent = () => (
       <button type="button" data-action="pin">Pin note</button>
       <button type="button" data-action="sync">Sync</button>
       <button type="button" data-action="theme">Theme</button>
+      <div class="g-size" role="group" aria-label="Text size">
+        <button type="button" data-action="smaller" aria-label="Smaller text">A−</button>
+        <span data-size-label aria-live="polite"></span>
+        <button type="button" data-action="larger" aria-label="Larger text">A+</button>
+      </div>
     </div>
     <div class="g-sync-panel" data-sync-panel hidden>
+      <button type="button" class="g-sync-close" data-sync-close aria-label="Close">×</button>
       <p data-sync-note></p>
       <button type="button" data-sync-button></button>
     </div>
@@ -26,7 +32,6 @@ const GardenChrome: QuartzComponent = () => (
   <div class="g-toast" data-toast role="status" aria-live="polite" hidden></div>
   <div class="g-scrim" data-sheet-scrim hidden></div>
   <div class="g-sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="g-sheet-title" hidden>
-    <div class="g-sheet-grip" data-sheet-grip></div>
     <h2 class="g-sheet-title" id="g-sheet-title" data-sheet-title></h2>
     <div class="g-sheet-body" data-sheet-body tabIndex={-1}></div>
     <a class="g-sheet-open" data-sheet-open hidden>Open</a>

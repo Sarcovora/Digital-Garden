@@ -1,4 +1,4 @@
-import { createStore, nextTheme, ThemePref } from "./gardenState"
+import { createStore, nextTheme, stepScale, SCALES, ThemePref } from "./gardenState"
 import { initLinks } from "./garden-links"
 import { labelFor, SyncStatus } from "./syncLabel"
 import { initSheet } from "./garden-sheet"
@@ -55,9 +55,22 @@ document.addEventListener("nav", () => {
     actions.hidden = !v
     toggle.setAttribute("aria-expanded", String(v))
     chrome.classList.toggle("g-open", v)
+    if (!v) syncPanel.hidden = true
     if (v) chrome.classList.remove("g-away")
   }
   themeBtn.textContent = THEME_LABEL[store.getTheme()]
+
+  // ---- text size ----
+  const sizeLabel = chrome.querySelector<HTMLElement>("[data-size-label]")!
+  const smallerBtn = chrome.querySelector<HTMLButtonElement>('[data-action="smaller"]')!
+  const largerBtn = chrome.querySelector<HTMLButtonElement>('[data-action="larger"]')!
+  const showScale = () => {
+    const n = store.getScale()
+    sizeLabel.textContent = `${Math.round(n * 100)}%`
+    smallerBtn.disabled = n <= SCALES[0]
+    largerBtn.disabled = n >= SCALES[SCALES.length - 1]
+  }
+  showScale()
 
   // ---- pinning: from the menu, or by long-pressing the note title ----
   const pinBtn = chrome.querySelector<HTMLElement>('[data-action="pin"]')!
@@ -84,6 +97,13 @@ document.addEventListener("nav", () => {
     const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-action]")
     if (!btn) return
     const action = btn.dataset.action
+    if (action === "smaller" || action === "larger") {
+      const next = stepScale(store.getScale(), action === "larger" ? 1 : -1)
+      store.setScale(next)
+      ;(window as any).gardenSetScale?.(next)
+      showScale()
+      return // stay open so the change is visible
+    }
     if (action === "pin") { togglePin(); setOpen(false); return }
     if (action === "theme") {
       const next = nextTheme(store.getTheme(), mq.matches)
@@ -110,6 +130,7 @@ document.addEventListener("nav", () => {
   // ---- sync panel ----
   const syncPanel = chrome.querySelector<HTMLElement>("[data-sync-panel]")!
   const syncBtn = chrome.querySelector<HTMLButtonElement>("[data-sync-button]")!
+  on(chrome.querySelector("[data-sync-close]")!, "click", () => { syncPanel.hidden = true })
   const syncNote = chrome.querySelector<HTMLElement>("[data-sync-note]")!
   let knownBuild: string | null = null
   let updated = false

@@ -19,4 +19,7 @@ for (const [pkg, file] of [
   ["source-sans-3", "source-sans-3-latin-wght-italic.woff2"],
 ]) await copyFile(nm(`@fontsource-variable/${pkg}/files/${file}`), out(`fonts/${file}`))
 for (const f of ["Virgil.ttf", "Excalifont.ttf"]) await copyFile(nm(`@excalidraw/utils/dist/prod/assets/${f}`), out(`fonts/${f}`))
+await mkdir(out("mermaid"), { recursive: true })
+await copyFile(nm("mermaid/dist/mermaid.esm.min.mjs"), out("mermaid/mermaid.esm.min.mjs"))
+await cp(nm("mermaid/dist/chunks/mermaid.esm.min"), out("mermaid/chunks/mermaid.esm.min"), { recursive: true })
 console.log("assets copied")

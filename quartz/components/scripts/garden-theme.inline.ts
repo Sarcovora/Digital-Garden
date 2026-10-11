@@ -23,3 +23,16 @@ mq.addEventListener("change", apply)
   } catch {}
   apply()
 }
+
+// Text size: a scale factor on the root font size, applied before first paint.
+const SCALE_KEY = "garden:scale"
+const applyScale = () => {
+  let n = 1
+  try { n = Number(localStorage.getItem(SCALE_KEY)) || 1 } catch {}
+  document.documentElement.style.setProperty("--garden-text-scale", String(n))
+}
+applyScale()
+;(window as any).gardenSetScale = (n: number) => {
+  try { n === 1 ? localStorage.removeItem(SCALE_KEY) : localStorage.setItem(SCALE_KEY, String(n)) } catch {}
+  applyScale()
+}

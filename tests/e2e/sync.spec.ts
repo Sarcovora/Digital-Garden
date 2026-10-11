@@ -49,3 +49,16 @@ test("the sync API being unreachable does not break the panel", async ({ page })
   await openSync(page)
   await expect(page.locator("[data-sync-note]")).toContainText(/Can't reach the garden/)
 })
+
+test("a GitHub error can be dismissed with the close button and with the menu", async ({ page, request }) => {
+  await request.post("/__stub", { data: { behind: 0, state: "idle", error: null, checkError: "ssh: could not resolve host" } })
+  await openSync(page)
+  const panel = page.locator("[data-sync-panel]")
+  await expect(panel).toContainText("Can't reach GitHub")
+  await page.locator("[data-sync-close]").click()
+  await expect(panel).toBeHidden()
+  await page.locator('[data-action="sync"]').click()
+  await expect(panel).toBeVisible()
+  await page.locator("[data-toggle]").click() // closing the menu closes the panel too
+  await expect(panel).toBeHidden()
+})

@@ -6,7 +6,7 @@ import { contrast, readTokens } from "./contrast.mjs"
 const css = readFileSync("quartz/styles/_garden-tokens.scss", "utf8")
 for (const theme of ["light", "dark"]) {
   const t = readTokens(css, theme)
-  for (const [fg, bg, min] of [["ink", "paper", 7], ["ink-2", "paper", 4.5], ["oxblood", "paper", 4.5]]) {
+  for (const [fg, bg, min] of [["ink", "paper", 7], ["ink-2", "paper", 4.5], ["oxblood", "paper", 4.5], ["bold", "paper", 4.5], ["italic", "paper", 4.5], ["ink", "mark", 4.5]]) {
     test(`${theme}: --garden-${fg} on --garden-${bg} is at least ${min}:1`, () => {
       const c = contrast(t[fg], t[bg])
       assert.ok(c >= min, `${fg}/${bg} = ${c.toFixed(2)}`)

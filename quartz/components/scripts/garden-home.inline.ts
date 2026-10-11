@@ -1,5 +1,5 @@
 import { createStore } from "./gardenState"
-import { buildHomeModel, IndexEntry } from "./homeModel"
+import { buildHomeModel, listFolder, IndexEntry } from "./homeModel"
 
 const toHref = (slug: string) => "/" + slug.split("/").map(encodeURIComponent).join("/")
 
@@ -50,14 +50,17 @@ document.addEventListener("nav", async () => {
   root.querySelector("[data-recents]")!.replaceChildren(...model.recents.map((e) => li(e)))
 
   for (const tab of root.querySelectorAll<HTMLButtonElement>(".g-thumb")) {
-    const open = () => {
-      const folder = tab.dataset.area!
-      const items = index
-        .filter((e) => e.folder === folder)
-        .sort((a, b) => a.title.localeCompare(b.title))
-        .map((e) => ({ href: toHref(e.slug), label: e.title }))
-      ;(window as any).gardenOpenSheet?.({ title: folder, items })
+    const show = (path: string) => {
+      const { folders, notes } = listFolder(index, path)
+      const parent = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : null
+      const items = [
+        ...(parent !== null ? [{ label: "↑ " + (parent.split("/").pop() ?? parent), onSelect: () => show(parent) }] : []),
+        ...folders.map((f) => ({ label: f.name + " /", meta: String(f.count), onSelect: () => show(f.path) })),
+        ...notes.map((e) => ({ href: toHref(e.slug), label: e.title })),
+      ]
+      ;(window as any).gardenOpenSheet?.({ title: path.split("/").pop() ?? path, items })
     }
+    const open = () => show(tab.dataset.area!)
     tab.addEventListener("click", open)
     window.addCleanup(() => tab.removeEventListener("click", open))
   }

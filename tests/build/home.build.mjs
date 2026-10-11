@@ -24,7 +24,7 @@ test("build emits the home page and a small garden index with git dates", async 
   assert.ok(alpha); assert.equal(alpha.folder, "")
   assert.equal(index.find((e) => e.title === "1 Cor. 12").folder, "Bible")
   assert.equal(alpha.modified, Date.parse("2026-03-01T00:00:00Z") / 1000)
-  assert.equal(Object.keys(alpha).sort().join(), "folder,modified,slug,title")
+  assert.equal(Object.keys(alpha).sort().join(), "folder,modified,path,slug,title")
   assert.ok(index.every((e) => !e.slug.includes(".obsidian")))
   const home = await readFile(path.join(out, "index.html"), "utf8")
   assert.match(home, /data-garden-home/)

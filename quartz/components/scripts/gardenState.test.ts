@@ -1,6 +1,15 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { resolveTheme } from "./gardenState"
+import { resolveTheme, stepScale } from "./gardenState"
+
+const mem = () => {
+  const m = new Map<string, string>()
+  return {
+    getItem: (k: string) => m.get(k) ?? null,
+    setItem: (k: string, v: string) => void m.set(k, v),
+    removeItem: (k: string) => void m.delete(k),
+  }
+}
 
 test("system follows the phone", () => {
   assert.equal(resolveTheme("system", true), "dark")
@@ -89,4 +98,20 @@ test("theme cycle starts by changing what you see (opposite of the phone), then 
   assert.equal(nextTheme("system", true), "light")
   assert.equal(nextTheme("light", true), "dark")
   assert.equal(nextTheme("dark", true), "system")
+})
+
+test("stepScale moves one notch and stops at the ends", () => {
+  assert.equal(stepScale(1, 1), 1.15)
+  assert.equal(stepScale(1, -1), 0.85)
+  assert.equal(stepScale(1.5, 1), 1.5)
+  assert.equal(stepScale(0.85, -1), 0.85)
+  assert.equal(stepScale(1.07, 1), 1.15) // a stray stored value snaps to the next notch
+})
+test("text scale persists and ignores junk", () => {
+  const s = createStore(mem())
+  assert.equal(s.getScale(), 1)
+  s.setScale(1.3)
+  assert.equal(s.getScale(), 1.3)
+  const j = mem(); j.setItem("garden:scale", "huge")
+  assert.equal(createStore(j).getScale(), 1)
 })

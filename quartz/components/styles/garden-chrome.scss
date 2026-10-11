@@ -73,6 +73,20 @@ body:not([data-slug="index"]) .search > .search-button {
     &:last-child { border-bottom: 0; }
   }
 }
+.g-size {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--garden-rule);
+  font-family: var(--garden-font-ui);
+  button { flex: 0 0 25%; min-height: 48px; border: 0; background: transparent; color: var(--garden-ink); font: inherit; cursor: pointer; text-align: center; &:disabled { opacity: 0.35; cursor: default; } }
+  [data-size-label] { flex: 1; text-align: center; color: var(--garden-ink-2); font-variant-numeric: tabular-nums; }
+}
+.g-sync-panel { position: relative; }
+.g-sync-panel .g-sync-close {
+  position: absolute; top: 0; right: 0; width: 44px; min-height: 44px; margin: 0;
+  background: transparent; border: 0; color: var(--garden-ink-2); font-size: 1.4rem; line-height: 1; cursor: pointer;
+}
+.g-sync-panel p { padding-right: 32px; }
 .g-progress {
   position: fixed;
   right: 0;
@@ -128,7 +142,7 @@ sup.g-ref {
   max-height: 70vh;
   display: flex;
   flex-direction: column;
-  padding: 8px 20px calc(16px + env(safe-area-inset-bottom));
+  padding: 18px 20px calc(16px + env(safe-area-inset-bottom));
   background: var(--garden-onionskin);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -139,16 +153,6 @@ sup.g-ref {
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .g-sheet { background: var(--garden-paper); }
-}
-.g-sheet-grip {
-  align-self: center;
-  width: 64px;
-  min-height: 44px;
-  display: grid;
-  place-items: center;
-  touch-action: none;
-  cursor: grab;
-  &::before { content: ""; width: 36px; height: 4px; border-radius: 2px; background: var(--garden-rule); }
 }
 .g-sheet-title {
   margin: 0 0 4px;
@@ -162,6 +166,8 @@ sup.g-ref {
   color: var(--garden-ink);
   img { max-width: 100%; height: auto; }
   .g-list { list-style: none; margin: 0; padding: 0; }
+  .g-list button { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: space-between; min-height: 44px; border-bottom: 1px solid var(--garden-rule); font-family: var(--garden-font-ui); color: var(--garden-ink); }
+  .g-list-meta { font-variant-numeric: tabular-nums; color: var(--garden-ink-2); font-size: 0.85em; }
   .g-list a { display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--garden-rule); text-decoration: none; }
 }
 .g-sheet-open {

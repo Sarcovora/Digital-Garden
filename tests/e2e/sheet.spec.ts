@@ -67,19 +67,6 @@ test("a preview of a note that cannot be fetched explains itself", async ({ page
   await page.locator("article sup.g-ref").first().click()
   await expect(page.locator("[data-sheet]")).toContainText(/Couldn't load/)
 })
-test("the sheet is dismissed by dragging the grip down", async ({ page }) => {
-  await page.goto("/Verse-Embed")
-  await page.locator("article sup.g-ref").first().click()
-  await expect(page.locator("[data-sheet]")).toBeVisible()
-  const grip = await page.locator("[data-sheet-grip]").boundingBox()
-  await page.evaluate(({ x, y }) => {
-    const el = document.querySelector("[data-sheet-grip]")!
-    const ev = (type: string, cy: number) => el.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: cy, pointerId: 1, bubbles: true }))
-    ev("pointerdown", y); ev("pointermove", y + 120); ev("pointerup", y + 120)
-  }, { x: grip!.x + 10, y: grip!.y + 5 })
-  await expect(page.locator("[data-sheet]")).toBeHidden()
-})
-
 test("opening the sheet does not restyle the page behind it (class-name collision regression)", async ({ page }) => {
   await page.goto("/Verse-Embed")
   const before = await page.evaluate(() => {
@@ -94,4 +81,10 @@ test("opening the sheet does not restyle the page behind it (class-name collisio
   })
   expect(during).toEqual(before)
   expect(during.font).toContain("Literata")
+})
+test("the sheet has no drag grip; tapping outside is how you dismiss it", async ({ page }) => {
+  await page.goto("/Verse-Embed")
+  await page.locator("article sup.g-ref").first().click()
+  await expect(page.locator("[data-sheet]")).toBeVisible()
+  await expect(page.locator("[data-sheet-grip], .g-sheet-grip")).toHaveCount(0)
 })

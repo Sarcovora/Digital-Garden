@@ -40,10 +40,13 @@ test("math renders and the vault preamble macro expands (no undefined control se
 })
 test("no external CDN or Google Fonts references in any page", async () => {
   for (const f of ["Alpha-Note.html", "index.html", "404.html"]) {
-    // Mermaid is the one permitted third-party fetch (only runs on pages that contain a mermaid block).
-    const html = (await page(f).catch(() => "")).replaceAll("https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.0/mermaid.esm.min.mjs", "")
+    const html = await page(f).catch(() => "")
     assert.doesNotMatch(html, /cdn\.jsdelivr|fonts\.googleapis|fonts\.gstatic|cdnjs|plausible/, f)
   }
+})
+test("self-hosted mermaid and its chunks are emitted", async () => {
+  await readFile(path.join(ctx.out, "static/mermaid/mermaid.esm.min.mjs"))
+  assert.ok((await readdir(path.join(ctx.out, "static/mermaid/chunks/mermaid.esm.min"))).length > 20)
 })
 test("self-hosted KaTeX css and fonts are emitted", async () => {
   await readFile(path.join(ctx.out, "static/katex/katex.min.css"))

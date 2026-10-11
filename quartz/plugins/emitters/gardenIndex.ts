@@ -15,6 +15,7 @@ export const GardenIndex: QuartzEmitterPlugin = () => ({
         slug: file.data.slug as string,
         title: (file.data.frontmatter?.title as string) ?? (file.data.slug as string),
         folder: parts.length > 1 ? parts[0] : "",
+        path: parts.slice(0, -1).join("/"),
         modified: modified ? Math.floor(modified.getTime() / 1000) : 0,
       }
     })

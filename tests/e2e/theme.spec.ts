@@ -62,3 +62,21 @@ test("drawings are inverted for the night page so strokes stay visible, and not 
     await ctx.close()
   }
 })
+
+test("highlight, bold and italic each render in their own colour, in both themes", async ({ browser }) => {
+  for (const scheme of ["light", "dark"] as const) {
+    const ctx = await browser.newContext({ colorScheme: scheme })
+    const page = await ctx.newPage()
+    await page.goto("/Emphasis")
+    const css = (sel: string, prop: string) => page.locator(sel).first().evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop)
+    const [mark, bold, ital, body] = [
+      await css("article .text-highlight", "background-color"),
+      await css("article strong", "color"),
+      await css("article em", "color"),
+      await css("article p", "color"),
+    ]
+    expect(new Set([bold, ital, body]).size, `${scheme} ${bold} ${ital} ${body}`).toBe(3)
+    expect(mark, scheme).not.toBe("rgba(0, 0, 0, 0)")
+    await ctx.close()
+  }
+})

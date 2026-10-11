@@ -3,7 +3,7 @@ import { extractPassage } from "./passage"
 export interface SheetOptions {
   title: string
   html?: string
-  items?: { href: string; label: string }[]
+  items?: { href?: string; label: string; meta?: string; onSelect?: () => void }[]
   href?: string
 }
 
@@ -28,7 +28,6 @@ export function initSheet() {
   const title = sheet.querySelector<HTMLElement>("[data-sheet-title]")!
   const body = sheet.querySelector<HTMLElement>("[data-sheet-body]")!
   const openLink = sheet.querySelector<HTMLAnchorElement>("[data-sheet-open]")!
-  const grip = sheet.querySelector<HTMLElement>("[data-sheet-grip]")!
   let invoker: HTMLElement | null = null
   let token = 0
 
@@ -58,7 +57,7 @@ export function initSheet() {
   }
 
   ;(window as any).gardenOpenSheet = async (opts: SheetOptions) => {
-    invoker = (document.activeElement as HTMLElement) ?? null
+    if (sheet.hidden) invoker = (document.activeElement as HTMLElement) ?? null // drilling into a folder re-renders in place
     const mine = ++token
     title.textContent = opts.title
     body.replaceChildren()
@@ -73,9 +72,13 @@ export function initSheet() {
         ul.className = "g-list"
         for (const it of opts.items) {
           const li = document.createElement("li")
-          const a = document.createElement("a")
-          a.href = it.href
+          const a: HTMLElement = document.createElement(it.onSelect ? "button" : "a")
+          if (it.onSelect) {
+            ;(a as HTMLButtonElement).type = "button"
+            a.addEventListener("click", it.onSelect)
+          } else (a as HTMLAnchorElement).href = it.href ?? "#"
           a.textContent = it.label
+          if (it.meta) { const m = document.createElement("span"); m.className = "g-list-meta"; m.textContent = it.meta; a.append(m) }
           li.append(a)
           ul.append(li)
         }
@@ -126,18 +129,4 @@ export function initSheet() {
   on(document, "keydown", onKey)
   on(scrim, "click", close)
   on(openLink, "click", () => { document.body.classList.remove("g-sheet-active"); sheet.hidden = true; scrim.hidden = true })
-
-  // drag the grip down to dismiss
-  let startY: number | null = null
-  on(grip, "pointerdown", (e: PointerEvent) => { startY = e.clientY })
-  on(grip, "pointermove", (e: PointerEvent) => {
-    if (startY === null) return
-    sheet.style.transform = `translateY(${Math.max(0, e.clientY - startY)}px)`
-  })
-  on(grip, "pointerup", (e: PointerEvent) => {
-    if (startY === null) return
-    const dy = e.clientY - startY
-    startY = null
-    dy > 80 ? close() : (sheet.style.transform = "")
-  })
 }

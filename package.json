@@ -69,6 +69,7 @@
     "mdast-util-find-and-replace": "^3.0.2",
     "mdast-util-to-hast": "^13.2.0",
     "mdast-util-to-string": "^4.0.0",
+    "mermaid": "11.4.0",
     "micromorph": "^0.4.5",
     "minimatch": "^10.0.3",
     "pixi.js": "^8.13.1",

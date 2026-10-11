@@ -37,7 +37,7 @@
 // ---- Reading page: single column at every width (iPhone first, iPad second, no desktop layout) ----
 html {
   -webkit-text-size-adjust: 100%;
-  font-size: 106.25%; // 17px base, scales with the user's browser setting
+  font-size: calc(106.25% * var(--garden-text-scale, 1)); // 17px base: scales with the browser setting and the menu's text size
 }
 body {
   background: var(--garden-paper);
@@ -169,4 +169,14 @@ input, textarea { caret-color: var(--garden-oxblood); accent-color: var(--garden
 :root[saved-theme="dark"] figure.excalidraw svg {
   filter: invert(0.93) hue-rotate(180deg);
   image { filter: invert(1) hue-rotate(180deg); } // embedded raster images keep their own colors
+}
+
+// Emphasis you can scan for: highlight, bold and italic each get their own colour (never oxblood: that is the ribbon's).
+.page article {
+  .text-highlight, mark { background: var(--garden-mark); color: var(--garden-ink); padding: 0.05em 0.2em; border-radius: 3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  strong, b, p > strong { color: var(--garden-bold); }
+  em, i { color: var(--garden-italic); }
+  // keep a link's own colour when emphasis sits inside it, and don't recolour headings or callout titles
+  a strong, a em, a b, a i, h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, .callout-title strong, .callout-title em { color: inherit; }
+  strong em, em strong { color: var(--garden-bold); }
 }

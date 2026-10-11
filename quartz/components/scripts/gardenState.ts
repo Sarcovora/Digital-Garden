@@ -42,6 +42,13 @@ function safeStorage(storage?: KV): KV {
   }
 }
 
+export const SCALES = [0.85, 1, 1.15, 1.3, 1.5]
+// Next notch up or down from the current scale; a stray stored value snaps to the neighbouring notch.
+export function stepScale(current: number, dir: 1 | -1): number {
+  if (dir === 1) return SCALES.find((s) => s > current + 1e-9) ?? SCALES[SCALES.length - 1]
+  return [...SCALES].reverse().find((s) => s < current - 1e-9) ?? SCALES[0]
+}
+
 export function createStore(storage?: KV) {
   const kv = safeStorage(storage)
   const readList = (key: string): string[] => {
@@ -59,6 +66,13 @@ export function createStore(storage?: KV) {
     },
     setTheme(t: ThemePref) {
       t === "system" ? kv.removeItem("garden:theme") : kv.setItem("garden:theme", t)
+    },
+    getScale(): number {
+      const n = Number(kv.getItem("garden:scale"))
+      return SCALES.includes(n) ? n : 1
+    },
+    setScale(n: number) {
+      n === 1 ? kv.removeItem("garden:scale") : kv.setItem("garden:scale", String(n))
     },
     getResume(): Resume | null {
       try {
