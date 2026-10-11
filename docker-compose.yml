@@ -4,6 +4,9 @@ services:
     build:
       context: .
       dockerfile: docker/sync.Dockerfile
+      args:
+        GARDEN_UID: "${GARDEN_UID:-1001}"
+        GARDEN_GID: "${GARDEN_GID:-1001}"
     user: "${GARDEN_UID:-1001}:${GARDEN_GID:-1001}"
     environment:
       GIT_SSH_COMMAND: "ssh -i /run/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/data/known_hosts"

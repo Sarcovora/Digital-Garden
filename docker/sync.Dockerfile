@@ -9,6 +9,10 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 # Quartz writes its cache next to the code; the container runs as the host user (GARDEN_UID), not root.
 RUN mkdir -p /app/quartz/.quartz-cache /app/.quartz-cache && chmod -R a+rwX /app/quartz/.quartz-cache /app/.quartz-cache
+# ssh refuses to run as a uid with no passwd entry ("No user exists for uid"), so give the host uid one.
+ARG GARDEN_UID=1001
+ARG GARDEN_GID=1001
+RUN echo "garden:x:${GARDEN_UID}:${GARDEN_GID}:garden:/tmp:/bin/sh" >> /etc/passwd
 ENV DATA_DIR=/data VAULT_DIR=/vault PORT=3000 HOME=/tmp NODE_ENV=production
 EXPOSE 3000
 CMD ["node", "sync/src/server.mjs"]
