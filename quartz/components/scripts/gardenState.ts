@@ -42,7 +42,7 @@ function safeStorage(storage?: KV): KV {
   }
 }
 
-export const SCALES = [0.85, 1, 1.15, 1.3, 1.5]
+export const SCALES = [0.25, 0.5, 0.75, 0.85, 1, 1.15, 1.3, 1.5, 1.75, 2]
 // Next notch up or down from the current scale; a stray stored value snaps to the neighbouring notch.
 export function stepScale(current: number, dir: 1 | -1): number {
   if (dir === 1) return SCALES.find((s) => s > current + 1e-9) ?? SCALES[SCALES.length - 1]

@@ -7,18 +7,11 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
-  transition: transform 0.18s ease, opacity 0.18s ease;
-
-  &.g-away {
-    transform: translateY(calc(100% + 32px));
-    opacity: 0;
-    pointer-events: none;
-  }
 }
 // On the home screen the search line owns the bottom edge, so the control sits above it.
 body[data-slug="index"] .garden-chrome {
   bottom: calc(76px + env(safe-area-inset-bottom));
-  [data-action="search"] { display: none; }
+  [data-action="search"], [data-action="home"] { display: none; }
 }
 // On note pages search is summoned from the control, never shown as a persistent field.
 body:not([data-slug="index"]) .search > .search-button {
@@ -68,7 +61,7 @@ body:not([data-slug="index"]) .search > .search-button {
     background: transparent;
     color: var(--garden-ink);
     font-family: var(--garden-font-ui);
-    font-size: 1rem;
+    font-size: calc(1 * 17px);
     cursor: pointer;
     &:last-child { border-bottom: 0; }
   }
@@ -78,13 +71,14 @@ body:not([data-slug="index"]) .search > .search-button {
   align-items: center;
   border-top: 1px solid var(--garden-rule);
   font-family: var(--garden-font-ui);
+  font-size: calc(1 * 17px);
   button { flex: 0 0 25%; min-height: 48px; border: 0; background: transparent; color: var(--garden-ink); font: inherit; cursor: pointer; text-align: center; &:disabled { opacity: 0.35; cursor: default; } }
   [data-size-label] { flex: 1; text-align: center; color: var(--garden-ink-2); font-variant-numeric: tabular-nums; }
 }
 .g-sync-panel { position: relative; }
 .g-sync-panel .g-sync-close {
   position: absolute; top: 0; right: 0; width: 44px; min-height: 44px; margin: 0;
-  background: transparent; border: 0; color: var(--garden-ink-2); font-size: 1.4rem; line-height: 1; cursor: pointer;
+  background: transparent; border: 0; color: var(--garden-ink-2); font-size: calc(1.4 * 17px); line-height: 1; cursor: pointer;
 }
 .g-sync-panel p { padding-right: 32px; }
 .g-progress {
@@ -112,7 +106,7 @@ sup.g-ref {
 .g-sync-panel {
   padding: 14px 16px;
   font-family: var(--garden-font-ui);
-  p { margin: 0 0 10px; color: var(--garden-ink-2); font-size: 0.95rem; }
+  p { margin: 0 0 10px; color: var(--garden-ink-2); font-size: calc(0.95 * 17px); }
   button {
     width: 100%;
     min-height: 48px;
@@ -121,7 +115,7 @@ sup.g-ref {
     background: var(--garden-ink);
     color: var(--garden-paper);
     font-family: inherit;
-    font-size: 1rem;
+    font-size: calc(1 * 17px);
     &:disabled { opacity: 0.5; background: transparent; color: var(--garden-ink-2); border-color: var(--garden-rule); }
   }
 }
@@ -156,7 +150,7 @@ sup.g-ref {
 }
 .g-sheet-title {
   margin: 0 0 4px;
-  font-size: 0.95rem;
+  font-size: calc(0.95 * 17px);
   color: var(--garden-ink-2);
 }
 .g-sheet-body {
@@ -200,8 +194,8 @@ sup.g-ref {
 
 @media (min-width: 700px) {
   .g-sheet {
-    padding-left: calc((100vw - 40rem) / 2 + 17px);
-    padding-right: calc((100vw - 40rem) / 2 + 17px);
+    padding-left: calc((100vw - calc(40 * 17px)) / 2 + 17px);
+    padding-right: calc((100vw - calc(40 * 17px)) / 2 + 17px);
   }
 }
 
@@ -220,5 +214,61 @@ body[data-slug="404"] [data-action="pin"] { display: none; }
   background: var(--garden-paper);
   color: var(--garden-ink);
   font-family: var(--garden-font-ui);
-  font-size: 0.95rem;
+  font-size: calc(0.95 * 17px);
 }
+
+// ---- outline: top-right button and a right-hand slide-out (always reachable while reading) ----
+.g-outline-toggle {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  right: calc(10px + env(safe-area-inset-right));
+  z-index: 20;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--garden-rule);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--garden-paper) 92%, transparent);
+  color: var(--garden-ink);
+  cursor: pointer;
+  &[hidden] { display: none; }
+  // a list that steps in: unlike the menu's three even lines
+  span {
+    width: 16px; height: 2px; background: currentColor;
+    box-shadow: 0 -6px 0 currentColor, 4px 6px 0 -0px currentColor;
+    transform: translateX(-2px);
+  }
+}
+.g-outline-scrim {
+  position: fixed; inset: 0; z-index: 29; background: transparent;
+  &[hidden] { display: none; }
+}
+.g-outline {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  z-index: 30;
+  box-sizing: border-box;
+  width: min(82vw, 320px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(64px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+  background: var(--garden-paper);
+  border-left: 1px solid var(--garden-gilt);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  font-family: var(--garden-font-ui);
+  transform: translateX(100%);
+  transition: transform 0.18s ease;
+  &[hidden] { display: none; }
+  &.g-in { transform: translateX(0); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { border-bottom: 1px solid var(--garden-rule); }
+  a {
+    display: flex; align-items: center; min-height: 44px;
+    color: var(--garden-ink); text-decoration: none;
+    font-size: calc(0.95 * 17px);
+  }
+}
+@media (prefers-reduced-motion: reduce) { .g-outline { transition: none; } }
+.page article h1[id], .page article h2[id], .page article h3[id], .page article h4[id] { scroll-margin-top: 16px; }
+.page article .article-title, .page .article-title { padding-right: 52px; }

@@ -11,7 +11,7 @@ const vault = await makeFixtureVault(path.join(root, "vault"))
 // Long enough to scroll, so progress and resume can be tested.
 await writeFile(
   path.join(vault, "Long Note.md"),
-  "---\ntitle: Long Note\n---\nSee [[Verse Embed]] and [[Alpha Note]].\n\n" + Array.from({ length: 80 }, (_, i) => `Paragraph ${i + 1}. ` + "Synthetic filler text for scrolling. ".repeat(6)).join("\n\n") + "\n",
+  "---\ntitle: Long Note\n---\nSee [[Verse Embed]] and [[Alpha Note]].\n\n" + Array.from({ length: 80 }, (_, i) => (i === 60 ? "## Far Section\n\n" : "") + `Paragraph ${i + 1}. ` + "Synthetic filler text for scrolling. ".repeat(6)).join("\n\n") + "\n",
 )
 const site = path.join(root, "site")
 const built = await buildFixture({ vaultDir: vault, outDir: site, env: { GARDEN_BUILD_ID: "e2e-build" } })

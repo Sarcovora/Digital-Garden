@@ -78,6 +78,8 @@ const config: QuartzConfig = {
       }),
       Plugin.ObsidianFlavoredMarkdown({ enableInHtmlEmbed: false, parseBlockReferences: true }),
       Plugin.GitHubFlavoredMarkdown(),
+      Plugin.HardLineBreaks(), // Obsidian keeps a single newline as a line break (its "strict line breaks" setting is off)
+      Plugin.SpacedLinkTargets(),
       Plugin.TableOfContents(),
       Plugin.CrawlLinks({ markdownLinkResolution: "shortest" }),
       Plugin.Description(),

@@ -8,6 +8,7 @@ const GardenChrome: QuartzComponent = () => (
   <div class="garden-chrome" data-garden-chrome>
     <div class="g-progress" aria-hidden="true"></div>
     <div class="g-actions" hidden>
+      <button type="button" data-action="home">Home</button>
       <button type="button" data-action="back">Back</button>
       <button type="button" data-action="search">Search</button>
       <button type="button" data-action="backlinks">Backlinks</button>
@@ -29,6 +30,13 @@ const GardenChrome: QuartzComponent = () => (
       <span aria-hidden="true"></span>
     </button>
   </div>
+  <button type="button" class="g-outline-toggle" data-outline-toggle aria-label="Outline" aria-expanded="false" hidden>
+    <span aria-hidden="true"></span>
+  </button>
+  <div class="g-outline-scrim" data-outline-scrim hidden></div>
+  <nav class="g-outline" data-outline aria-label="Outline of this page" hidden>
+    <ul data-outline-list></ul>
+  </nav>
   <div class="g-toast" data-toast role="status" aria-live="polite" hidden></div>
   <div class="g-scrim" data-sheet-scrim hidden></div>
   <div class="g-sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="g-sheet-title" hidden>

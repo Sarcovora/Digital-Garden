@@ -29,6 +29,20 @@ test("titles with dots and spaces link correctly", async () => {
 test("block-reference embed shows the verse text", async () => {
   assert.match(await page("Verse-Embed.html"), /Fixture verse twenty-five/)
 })
+test("a single newline inside a paragraph is a visible line break, as in Obsidian", async () => {
+  const html = await page("Obsidian-Quirks.html")
+  assert.match(html, /First line of a stanza<br\s*\/?>\s*second line right under it<br\s*\/?>\s*third line/)
+  assert.match(html, /Text right under a heading<br\s*\/?>\s*Another line under it/)
+})
+test("a list, table, quote or heading directly under a paragraph is still its own block", async () => {
+  const html = await page("Obsidian-Quirks.html")
+  for (const re of [/<\/p>\s*<ul>/, /<\/p>\s*<ol>/, /<table>/, /<\/p>\s*<blockquote>/, /<\/p>\s*<h2/]) assert.match(html, re)
+})
+test("a markdown link whose target contains spaces becomes a link, as in Obsidian", async () => {
+  const html = await page("Obsidian-Quirks.html")
+  assert.match(html, /<a [^>]*href="[^"]*Preview-Target[^"]*"[^>]*>see it<\/a>/)
+  assert.match(html, /<a [^>]*href="[^"]*Linker[^"]*"[^>]*>another<\/a>/)
+})
 test("callout renders", async () => {
   assert.match(await page("Alpha-Note.html"), /class="callout/)
 })

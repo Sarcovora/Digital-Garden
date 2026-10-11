@@ -1,6 +1,6 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { resolveTheme, stepScale } from "./gardenState"
+import { resolveTheme, stepScale, SCALES } from "./gardenState"
 
 const mem = () => {
   const m = new Map<string, string>()
@@ -100,12 +100,15 @@ test("theme cycle starts by changing what you see (opposite of the phone), then 
   assert.equal(nextTheme("dark", true), "system")
 })
 
-test("stepScale moves one notch and stops at the ends", () => {
+test("stepScale moves one notch and stops at the ends, 25% to 200%", () => {
   assert.equal(stepScale(1, 1), 1.15)
   assert.equal(stepScale(1, -1), 0.85)
-  assert.equal(stepScale(1.5, 1), 1.5)
-  assert.equal(stepScale(0.85, -1), 0.85)
+  assert.equal(stepScale(0.85, -1), 0.75)
+  assert.equal(stepScale(2, 1), 2)
+  assert.equal(stepScale(0.25, -1), 0.25)
   assert.equal(stepScale(1.07, 1), 1.15) // a stray stored value snaps to the next notch
+  assert.equal(SCALES[0], 0.25)
+  assert.equal(SCALES[SCALES.length - 1], 2)
 })
 test("text scale persists and ignores junk", () => {
   const s = createStore(mem())

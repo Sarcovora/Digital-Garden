@@ -56,7 +56,6 @@ document.addEventListener("nav", () => {
     toggle.setAttribute("aria-expanded", String(v))
     chrome.classList.toggle("g-open", v)
     if (!v) syncPanel.hidden = true
-    if (v) chrome.classList.remove("g-away")
   }
   themeBtn.textContent = THEME_LABEL[store.getTheme()]
 
@@ -114,6 +113,7 @@ document.addEventListener("nav", () => {
     }
     setOpen(false)
     if (action === "search") document.querySelector<HTMLButtonElement>(".search-button")?.click()
+    else if (action === "home") location.assign("/")
     else if (action === "back") goBack()
     else if (action === "backlinks") {
       const items = Array.from(document.querySelectorAll<HTMLAnchorElement>(".backlinks a")).map((a) => ({
@@ -200,24 +200,53 @@ document.addEventListener("nav", () => {
     const t = e.changedTouches?.[0]
     if (!start || !t) return
     if (document.body.classList.contains("g-sheet-active")) return
-    if ((start.target as Element | null)?.closest?.("pre, table, .katex-display, [data-sheet], .search-container")) return
+    if ((start.target as Element | null)?.closest?.("pre, table, .katex-display, [data-sheet], [data-outline], .search-container")) return
     if (classifySwipe({ startX: start.x, startY: start.y, endX: t.clientX, endY: t.clientY, ms: Date.now() - start.at }) === "back") goBack()
   })
 
-  // ---- hide on scroll down, return on scroll up ----
-  let lastY = window.scrollY
+  // ---- outline: a right-hand slide-out of the page's headings ----
+  const outlineBtn = document.querySelector<HTMLButtonElement>("[data-outline-toggle]")!
+  const outline = document.querySelector<HTMLElement>("[data-outline]")!
+  const outlineScrim = document.querySelector<HTMLElement>("[data-outline-scrim]")!
+  const outlineList = outline.querySelector<HTMLElement>("[data-outline-list]")!
+  const heads = isNote() ? Array.from(document.querySelectorAll<HTMLElement>("article h1[id], article h2[id], article h3[id], article h4[id]")).filter((h) => !h.classList.contains("article-title")) : []
+  outlineBtn.hidden = heads.length === 0
+  const topLevel = Math.min(...heads.map((h) => Number(h.tagName[1])), 6)
+  outlineList.replaceChildren(...heads.map((h) => {
+    const li = document.createElement("li")
+    const a = document.createElement("a")
+    a.href = "#" + h.id
+    a.textContent = h.textContent?.replace(/^#\s*/, "") ?? ""
+    li.style.paddingLeft = `${(Number(h.tagName[1]) - topLevel) * 14}px`
+    a.addEventListener("click", (e) => {
+      e.preventDefault()
+      setOutline(false)
+      h.scrollIntoView({ block: "start", behavior: "instant" as ScrollBehavior })
+    })
+    li.append(a)
+    return li
+  }))
+  const setOutline = (v: boolean) => {
+    outlineBtn.setAttribute("aria-expanded", String(v))
+    if (v) { outline.hidden = false; outlineScrim.hidden = false; requestAnimationFrame(() => { outline.classList.add("g-in"); outlineScrim.classList.add("g-in") }) }
+    else {
+      outline.classList.remove("g-in"); outlineScrim.classList.remove("g-in")
+      const done = () => { outline.hidden = true; outlineScrim.hidden = true }
+      reduced() ? done() : setTimeout(done, 180)
+    }
+  }
+  on(outlineBtn, "click", () => { setOpen(false); setOutline(outline.hidden || !outline.classList.contains("g-in")) })
+  on(outlineScrim, "click", () => setOutline(false))
+  on(document, "keydown", (e: KeyboardEvent) => { if (e.key === "Escape" && !outline.hidden) setOutline(false) })
+  window.addCleanup(() => { outline.hidden = true; outline.classList.remove("g-in"); outlineScrim.hidden = true; outlineScrim.classList.remove("g-in") })
+
+  // ---- scroll: reading progress and resume (the menu button stays put) ----
   let ticking = false
   const onScroll = () => {
     if (ticking) return
     ticking = true
     requestAnimationFrame(() => {
       ticking = false
-      const y = window.scrollY
-      if (!open) {
-        if (y > lastY + 8) chrome.classList.add("g-away")
-        else if (y < lastY - 8) chrome.classList.remove("g-away")
-      }
-      lastY = y
       updateProgress()
       scheduleSave()
     })

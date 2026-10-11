@@ -104,7 +104,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     vaultDir: process.env.VAULT_DIR ?? "/vault",
     dataDir: process.env.DATA_DIR ?? "/data",
     // run Quartz's CLI directly: `npx` wants a writable npm cache, and the container runs as the host uid, not root
-    buildCmd: { cmd: "node", args: ["quartz/bootstrap-cli.mjs", "build"], cwd: process.cwd() },
+    // Quartz parses with 4 threads by default; this host has plenty of cores, and parsing is most of the build (37s -> ~25s).
+    buildCmd: { cmd: "node", args: ["quartz/bootstrap-cli.mjs", "build", "--concurrency", process.env.BUILD_THREADS ?? "12"], cwd: process.cwd() },
     verify: verifyBuild,
   })
   app.server.listen(Number(process.env.PORT ?? 3000), "0.0.0.0")
