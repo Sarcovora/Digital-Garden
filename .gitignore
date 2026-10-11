@@ -1,0 +1,10 @@
+node_modules
+public
+.quartz-cache
+.env
+data
+tests/.out
+test-results
+playwright-report
+.superpowers
+.impeccable/review/

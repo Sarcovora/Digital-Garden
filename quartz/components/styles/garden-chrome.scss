@@ -1,0 +1,218 @@
+.garden-chrome {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+
+  &.g-away {
+    transform: translateY(calc(100% + 32px));
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+// On the home screen the search line owns the bottom edge, so the control sits above it.
+body[data-slug="index"] .garden-chrome {
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  [data-action="search"] { display: none; }
+}
+// On note pages search is summoned from the control, never shown as a persistent field.
+body:not([data-slug="index"]) .search > .search-button {
+  display: none;
+}
+.g-toggle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid var(--garden-rule);
+  background: var(--garden-paper);
+  color: var(--garden-ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 1px 0 var(--garden-rule);
+
+  span {
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor;
+  }
+}
+// One ruled paper panel (not a stack of floating pills): rows separated by hairlines, same width as the sync panel.
+.g-actions,
+.g-sync-panel {
+  box-sizing: border-box;
+  width: min(78vw, 260px);
+  background: color-mix(in srgb, var(--garden-paper) 96%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--garden-rule);
+  border-top-color: var(--garden-gilt);
+  border-radius: var(--garden-radius);
+}
+.g-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  button {
+    min-height: 48px;
+    padding: 0 16px;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid var(--garden-rule);
+    background: transparent;
+    color: var(--garden-ink);
+    font-family: var(--garden-font-ui);
+    font-size: 1rem;
+    cursor: pointer;
+    &:last-child { border-bottom: 0; }
+  }
+}
+.g-progress {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 2px;
+  height: 100vh;
+  background: var(--garden-gilt);
+  transform-origin: top;
+  transform: scaleY(var(--p, 0));
+  pointer-events: none;
+}
+sup.g-ref {
+  font-family: var(--garden-font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.62em;
+  color: var(--garden-oxblood);
+  cursor: pointer;
+  // the visible numeral is small; the touch target is 44pt
+  padding: 16px 10px;
+  margin: -16px -10px;
+  &:focus-visible { outline: 2px solid var(--garden-oxblood); outline-offset: -4px; }
+}
+.g-sync-panel {
+  padding: 14px 16px;
+  font-family: var(--garden-font-ui);
+  p { margin: 0 0 10px; color: var(--garden-ink-2); font-size: 0.95rem; }
+  button {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid var(--garden-ink);
+    border-radius: var(--garden-radius);
+    background: var(--garden-ink);
+    color: var(--garden-paper);
+    font-family: inherit;
+    font-size: 1rem;
+    &:disabled { opacity: 0.5; background: transparent; color: var(--garden-ink-2); border-color: var(--garden-rule); }
+  }
+}
+
+// ---- The onionskin sheet: translucent paper over the page, the page ghosted through it ----
+.g-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: transparent;
+}
+.g-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 31;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 20px calc(16px + env(safe-area-inset-bottom));
+  background: var(--garden-onionskin);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--garden-gilt);
+  transform: translateY(100%);
+  transition: transform 0.18s ease;
+  &.g-sheet-in { transform: translateY(0); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .g-sheet { background: var(--garden-paper); }
+}
+.g-sheet-grip {
+  align-self: center;
+  width: 64px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  cursor: grab;
+  &::before { content: ""; width: 36px; height: 4px; border-radius: 2px; background: var(--garden-rule); }
+}
+.g-sheet-title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  color: var(--garden-ink-2);
+}
+.g-sheet-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  outline: none;
+  color: var(--garden-ink);
+  img { max-width: 100%; height: auto; }
+  .g-list { list-style: none; margin: 0; padding: 0; }
+  .g-list a { display: flex; align-items: center; min-height: 44px; border-bottom: 1px solid var(--garden-rule); text-decoration: none; }
+}
+.g-sheet-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin-top: 8px;
+  border: 1px solid var(--garden-ink);
+  border-radius: var(--garden-radius);
+  font-family: var(--garden-font-ui);
+  text-decoration: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .g-sheet { transition: none; }
+}
+.g-sheet-active .garden-chrome {
+  opacity: 0;
+  pointer-events: none;
+}
+
+// Swipe-back: a short flat page slide (about 180 ms, no springs).
+#quartz-body {
+  transition: transform 0.18s ease, opacity 0.18s ease;
+  &.g-leaving { transform: translateX(24px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #quartz-body { transition: none; }
+}
+
+@media (min-width: 700px) {
+  .g-sheet {
+    padding-left: calc((100vw - 40rem) / 2 + 17px);
+    padding-right: calc((100vw - 40rem) / 2 + 17px);
+  }
+}
+
+body[data-slug="index"] [data-action="pin"],
+body[data-slug="404"] [data-action="pin"] { display: none; }
+.g-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 10px 18px;
+  border: 1px solid var(--garden-rule);
+  border-top-color: var(--garden-gilt);
+  border-radius: var(--garden-radius);
+  background: var(--garden-paper);
+  color: var(--garden-ink);
+  font-family: var(--garden-font-ui);
+  font-size: 0.95rem;
+}

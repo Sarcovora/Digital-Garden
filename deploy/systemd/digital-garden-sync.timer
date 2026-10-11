@@ -1,0 +1,9 @@
+[Unit]
+Description=Run the digital garden sync nightly
+
+[Timer]
+OnCalendar=*-*-* 05:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,172 @@
+@use "./base.scss";
+@use "./garden-tokens";
+
+// put your custom CSS here!
+
+// Self-hosted fonts (no CDN). Files are copied from node_modules by scripts/copy-assets.mjs.
+@font-face {
+  font-family: "Literata Variable";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/static/fonts/literata-latin-standard-normal.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Literata Variable";
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/static/fonts/literata-latin-standard-italic.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Source Sans 3 Variable";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/static/fonts/source-sans-3-latin-wght-normal.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Source Sans 3 Variable";
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/static/fonts/source-sans-3-latin-wght-italic.woff2") format("woff2-variations");
+}
+
+
+// ---- Reading page: single column at every width (iPhone first, iPad second, no desktop layout) ----
+html {
+  -webkit-text-size-adjust: 100%;
+  font-size: 106.25%; // 17px base, scales with the user's browser setting
+}
+body {
+  background: var(--garden-paper);
+  color: var(--garden-ink);
+  font-family: var(--garden-font-text);
+  font-optical-sizing: auto;
+  line-height: 1.62;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+.page {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 0; // Quartz's .center already supplies the side gutter
+}
+.page .center > hr {
+  display: none; // Quartz inserts a rule before the page footer
+}
+.page #quartz-body {
+  display: block;
+}
+.page #quartz-body .sidebar.left,
+.page #quartz-body .sidebar.right {
+  display: none; // backlinks stay in the DOM; the floating control surfaces them in a sheet
+}
+.page .center {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--garden-font-text);
+  font-weight: 600;
+  font-variant-caps: small-caps; // real initial caps plus small caps, as in a study Bible
+  letter-spacing: 0.04em;
+  color: var(--garden-ink);
+}
+a, a.internal {
+  color: var(--garden-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--garden-rule);
+  text-underline-offset: 0.2em;
+  background: none;
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+figure.excalidraw {
+  margin: 1.5rem 0;
+  svg { max-width: 100%; height: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+// ---- Contract fixes: oxblood and gilt are rationed; body text is full ink ----
+article p, article li, article td, article th, article blockquote {
+  color: var(--garden-ink);
+}
+blockquote {
+  border-left: 2px solid var(--garden-rule);
+}
+.callout[data-callout] {
+  --color: var(--garden-ink-2); // title and icon: neutral; oxblood is for the ribbon and numerals only
+  --border: var(--garden-rule);
+  --bg: transparent;
+  border-width: 1px;
+  border-radius: var(--garden-radius);
+}
+.callout-title {
+  font-family: var(--garden-font-ui);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+.callout .callout-title .callout-title-inner {
+  color: var(--garden-ink-2);
+}
+
+// Author styles like `display: flex` would otherwise override the hidden attribute.
+[hidden] {
+  display: none !important;
+}
+
+// Links read as part of the sentence; the numeral carries the "this is a reference" signal.
+a.internal, a {
+  font-weight: inherit;
+}
+
+// Quartz's page-load bar and highlighted code lines would otherwise use oxblood; oxblood is reserved
+// for the ribbon and reference numerals, gilt is for edges and progress.
+.navigation-progress {
+  background: var(--garden-gilt);
+}
+[data-highlighted-line] {
+  border-left-color: var(--garden-gilt) !important;
+}
+
+// ---- Heading scale: a clear step between levels ----
+article h1, h1.article-title { font-size: 1.7rem; line-height: 1.2; }
+article h2 { font-size: 1.35rem; }
+article h3 { font-size: 1.12rem; }
+
+// ---- The gilt page edge: a hairline down the right edge of every page ----
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--garden-gilt);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 1;
+}
+
+// ---- Browser surfaces ----
+::selection { background: color-mix(in srgb, var(--garden-oxblood) 24%, transparent); }
+input, textarea { caret-color: var(--garden-oxblood); accent-color: var(--garden-oxblood); }
+* { scrollbar-width: thin; scrollbar-color: var(--garden-rule) transparent; }
+
+// ---- Excalidraw drawing fonts (self-hosted; the SVGs name Virgil and Excalifont) ----
+@font-face { font-family: "Virgil"; font-display: swap; src: url("/static/fonts/Virgil.ttf") format("truetype"); }
+@font-face { font-family: "Excalifont"; font-display: swap; src: url("/static/fonts/Excalifont.ttf") format("truetype"); }
+
+// Drawings are black-on-transparent; on the night page invert them the way Excalidraw's own dark mode does.
+:root[saved-theme="dark"] figure.excalidraw svg {
+  filter: invert(0.93) hue-rotate(180deg);
+  image { filter: invert(1) hue-rotate(180deg); } // embedded raster images keep their own colors
+}

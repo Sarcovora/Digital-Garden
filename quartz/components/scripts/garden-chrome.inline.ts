@@ -1,0 +1,245 @@
+import { createStore, nextTheme, ThemePref } from "./gardenState"
+import { initLinks } from "./garden-links"
+import { labelFor, SyncStatus } from "./syncLabel"
+import { initSheet } from "./garden-sheet"
+import { classifySwipe } from "./swipe"
+
+const storage = () => {
+  try { return window.localStorage } catch { return undefined }
+}
+const slugNow = () => document.body.dataset.slug ?? ""
+const isNote = () => { const s = slugNow(); return !!s && s !== "index" && s !== "404" }
+// Offline reading: register once per page load (the worker file is stamped per build).
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker.js").catch(() => {})
+
+// How many in-app pages deep we are: back at depth 1 means "go home", not "leave the app".
+let depth = 0
+let popped = false
+window.addEventListener("popstate", () => { popped = true })
+document.addEventListener("nav", () => {
+  if (popped) { depth = Math.max(1, depth - 1); popped = false } else depth++
+})
+const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches
+const goBack = () => {
+  if (depth <= 1) return void location.assign("/")
+  const body = document.getElementById("quartz-body")
+  if (!body || reduced()) return history.back()
+  body.classList.add("g-leaving")
+  setTimeout(() => { body.classList.remove("g-leaving"); history.back() }, 180)
+}
+;(window as any).gardenBack = goBack
+
+const THEME_LABEL: Record<ThemePref, string> = { system: "Theme: System", light: "Theme: Light", dark: "Theme: Dark" }
+
+document.addEventListener("nav", () => {
+  const store = createStore(storage())
+  const chrome = document.querySelector<HTMLElement>("[data-garden-chrome]")
+  if (!chrome) return
+  initSheet()
+  initLinks()
+
+  const actions = chrome.querySelector<HTMLElement>(".g-actions")!
+  const toggle = chrome.querySelector<HTMLButtonElement>("[data-toggle]")!
+  const progress = chrome.querySelector<HTMLElement>(".g-progress")!
+  const themeBtn = chrome.querySelector<HTMLElement>('[data-action="theme"]')!
+  const mq = window.matchMedia("(prefers-color-scheme: dark)")
+  const on = (t: { addEventListener: any; removeEventListener: any }, ev: string, fn: any, opts?: any) => {
+    t.addEventListener(ev, fn, opts)
+    window.addCleanup(() => t.removeEventListener(ev, fn, opts))
+  }
+
+  // ---- menu ----
+  let open = false
+  const setOpen = (v: boolean) => {
+    open = v
+    actions.hidden = !v
+    toggle.setAttribute("aria-expanded", String(v))
+    chrome.classList.toggle("g-open", v)
+    if (v) chrome.classList.remove("g-away")
+  }
+  themeBtn.textContent = THEME_LABEL[store.getTheme()]
+
+  // ---- pinning: from the menu, or by long-pressing the note title ----
+  const pinBtn = chrome.querySelector<HTMLElement>('[data-action="pin"]')!
+  const toast = document.querySelector<HTMLElement>("[data-toast]")!
+  let toastTimer: ReturnType<typeof setTimeout> | undefined
+  const showToast = (text: string) => {
+    toast.textContent = text
+    toast.hidden = false
+    if (toastTimer) clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => (toast.hidden = true), 1600)
+  }
+  const refreshPin = () => { pinBtn.textContent = store.getPins().includes(slugNow()) ? "Unpin note" : "Pin note" }
+  const togglePin = () => {
+    if (!isNote()) return
+    showToast(store.togglePin(slugNow()) ? "Pinned" : "Unpinned")
+    refreshPin()
+  }
+  refreshPin()
+  on(toggle, "click", () => setOpen(!open))
+  on(document, "click", (e: Event) => { if (open && !chrome.contains(e.target as Node)) setOpen(false) })
+  on(document, "keydown", (e: KeyboardEvent) => { if (e.key === "Escape" && open) setOpen(false) })
+
+  on(actions, "click", (e: Event) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-action]")
+    if (!btn) return
+    const action = btn.dataset.action
+    if (action === "pin") { togglePin(); setOpen(false); return }
+    if (action === "theme") {
+      const next = nextTheme(store.getTheme(), mq.matches)
+      store.setTheme(next)
+      ;(window as any).gardenSetTheme?.(next)
+      themeBtn.textContent = THEME_LABEL[next]
+      return // keep the menu open so the result is visible
+    }
+    setOpen(false)
+    if (action === "search") document.querySelector<HTMLButtonElement>(".search-button")?.click()
+    else if (action === "back") goBack()
+    else if (action === "backlinks") {
+      const items = Array.from(document.querySelectorAll<HTMLAnchorElement>(".backlinks a")).map((a) => ({
+        href: a.getAttribute("href") ?? "#", label: a.textContent ?? "",
+      }))
+      ;(window as any).gardenOpenSheet?.({ title: "Backlinks", items })
+    } else if (action === "sync") {
+      setOpen(true)
+      syncPanel.hidden = !syncPanel.hidden
+      if (!syncPanel.hidden) refreshSync()
+    }
+  })
+
+  // ---- sync panel ----
+  const syncPanel = chrome.querySelector<HTMLElement>("[data-sync-panel]")!
+  const syncBtn = chrome.querySelector<HTMLButtonElement>("[data-sync-button]")!
+  const syncNote = chrome.querySelector<HTMLElement>("[data-sync-note]")!
+  let knownBuild: string | null = null
+  let updated = false
+  let pollTimer: ReturnType<typeof setTimeout> | undefined
+  const renderSync = (st: SyncStatus & { buildId?: string | null }) => {
+    if (knownBuild === null) knownBuild = st.buildId ?? ""
+    if (st.state === "idle" && knownBuild !== (st.buildId ?? "")) updated = true
+    if (updated && st.state === "idle") {
+      syncBtn.textContent = "Reload"; syncBtn.disabled = false; syncBtn.removeAttribute("aria-busy")
+      syncNote.textContent = "Garden updated. Reload to read the new notes."
+      return
+    }
+    const l = labelFor(st, Date.now())
+    syncBtn.textContent = l.label
+    syncBtn.disabled = l.disabled
+    l.busy ? syncBtn.setAttribute("aria-busy", "true") : syncBtn.removeAttribute("aria-busy")
+    syncNote.textContent = l.note
+  }
+  const refreshSync = async () => {
+    try {
+      const st = await (await fetch("/api/status", { cache: "no-store" })).json()
+      renderSync(st)
+      return st as SyncStatus
+    } catch {
+      syncBtn.textContent = "Check again"; syncBtn.disabled = false
+      syncNote.textContent = "Can't reach the garden to check for updates."
+      return null
+    }
+  }
+  const poll = async (deadline: number) => {
+    const st = await refreshSync()
+    if (st && st.state !== "building") return
+    if (Date.now() > deadline) return
+    pollTimer = setTimeout(() => poll(deadline), 2000)
+  }
+  window.addCleanup(() => pollTimer && clearTimeout(pollTimer))
+  on(syncBtn, "click", async () => {
+    if (updated) return location.reload()
+    syncBtn.disabled = true; syncBtn.textContent = "Syncing…"; syncBtn.setAttribute("aria-busy", "true")
+    try {
+      await fetch("/api/sync", { method: "POST", headers: { "X-Garden": "1" } }) // 202 started, 200 up to date, 409 already running
+    } catch {
+      return void refreshSync()
+    }
+    poll(Date.now() + 20 * 60 * 1000)
+  })
+
+  const title = document.querySelector<HTMLElement>(".article-title")
+  if (title && isNote()) {
+    let pressTimer: ReturnType<typeof setTimeout> | undefined
+    const cancelPress = () => { if (pressTimer) clearTimeout(pressTimer); pressTimer = undefined }
+    on(title, "touchstart", () => { cancelPress(); pressTimer = setTimeout(() => { pressTimer = undefined; togglePin() }, 500) }, { passive: true })
+    on(title, "touchmove", cancelPress, { passive: true })
+    on(title, "touchend", cancelPress)
+    on(title, "touchcancel", cancelPress)
+  }
+
+  // ---- swipe back from the left edge ----
+  let touch: { x: number; y: number; at: number; target: EventTarget | null } | null = null
+  on(document, "touchstart", (e: any) => {
+    const t = e.changedTouches?.[0]
+    touch = t ? { x: t.clientX, y: t.clientY, at: Date.now(), target: e.target } : null
+  }, { passive: true })
+  on(document, "touchend", (e: any) => {
+    const start = touch
+    touch = null
+    const t = e.changedTouches?.[0]
+    if (!start || !t) return
+    if (document.body.classList.contains("g-sheet-active")) return
+    if ((start.target as Element | null)?.closest?.("pre, table, .katex-display, [data-sheet], .search-container")) return
+    if (classifySwipe({ startX: start.x, startY: start.y, endX: t.clientX, endY: t.clientY, ms: Date.now() - start.at }) === "back") goBack()
+  })
+
+  // ---- hide on scroll down, return on scroll up ----
+  let lastY = window.scrollY
+  let ticking = false
+  const onScroll = () => {
+    if (ticking) return
+    ticking = true
+    requestAnimationFrame(() => {
+      ticking = false
+      const y = window.scrollY
+      if (!open) {
+        if (y > lastY + 8) chrome.classList.add("g-away")
+        else if (y < lastY - 8) chrome.classList.remove("g-away")
+      }
+      lastY = y
+      updateProgress()
+      scheduleSave()
+    })
+  }
+  on(window, "scroll", onScroll, { passive: true })
+
+  // ---- progress, resume, recents (notes only) ----
+  const fraction = () => {
+    const max = document.documentElement.scrollHeight - window.innerHeight
+    return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
+  }
+  const updateProgress = () => progress.style.setProperty("--p", isNote() ? String(fraction()) : "0")
+  let saveTimer: ReturnType<typeof setTimeout> | undefined
+  const save = () => {
+    if (!isNote()) return
+    const title = document.querySelector(".article-title")?.textContent ?? document.title
+    store.setResume({ slug: slugNow(), title, fraction: fraction(), at: Date.now() })
+  }
+  const scheduleSave = () => {
+    if (!isNote()) return
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(save, 400)
+  }
+  on(document, "visibilitychange", () => { if (document.visibilityState === "hidden") save() })
+  on(window, "pagehide", save)
+  on(document, "prenav", save)
+
+  if (isNote()) {
+    store.pushRecent(slugNow())
+    // arriving from the home "Resume" link: go back to where the reader stopped
+    try {
+      const raw = sessionStorage.getItem("garden:restore")
+      if (raw) {
+        sessionStorage.removeItem("garden:restore")
+        const r = JSON.parse(raw)
+        if (r.slug === slugNow()) {
+          const go = () => window.scrollTo(0, r.fraction * (document.documentElement.scrollHeight - window.innerHeight))
+          requestAnimationFrame(go)
+          window.addEventListener("load", go, { once: true })
+        }
+      }
+    } catch {}
+    save()
+  }
+  updateProgress()
+})

@@ -1,0 +1,107 @@
+.garden-home {
+  position: relative;
+  padding: 24px 52px calc(96px + env(safe-area-inset-bottom)) 0; // right padding clears the thumb tabs
+
+  h2 {
+    font-family: var(--garden-font-ui);
+    font-size: 0.8rem;
+    color: var(--garden-ink-2);
+    margin: 2rem 0 0.25rem;
+  }
+}
+.g-resume {
+  position: relative;
+  min-height: 72px;
+  padding-left: 28px;
+  display: flex;
+  align-items: flex-start;
+  a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding-top: 12px;
+    font-size: 1.05rem;
+  }
+}
+.g-ribbon {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  width: 12px;
+  height: 72px;
+  background: var(--garden-oxblood);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+}
+.g-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    border-bottom: 1px solid var(--garden-rule);
+    text-decoration: none;
+  }
+}
+.g-hint {
+  font-family: var(--garden-font-ui);
+  font-size: 0.9rem;
+  color: var(--garden-ink-2);
+}
+.g-thumbs {
+  align-items: flex-end;
+  position: fixed;
+  right: 0;
+  top: calc(96px + env(safe-area-inset-top));
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+}
+.g-thumb {
+  min-height: 44px;
+  min-width: 40px;
+  padding: 0 8px;
+  font-family: var(--garden-font-ui);
+  font-size: 0.8rem;
+  color: var(--garden-ink-2);
+  background: var(--garden-paper);
+  border: 1px solid var(--garden-rule);
+  border-right: 0;
+  border-left: 2px solid var(--garden-gilt);
+  border-radius: var(--garden-radius) 0 0 var(--garden-radius);
+  margin-bottom: -1px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  &:nth-child(even) { min-width: 50px; } // stepped, like a thumb index
+}
+// The Quartz search element becomes a bottom-anchored ruled line on the home screen.
+.garden-home ~ .search,
+body[data-slug="index"] .search {
+  position: fixed;
+  left: 17px;
+  right: 17px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 4;
+  max-width: none;
+  width: auto;
+  .search-button {
+    width: 100%;
+    min-height: 48px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--garden-ink);
+    border-radius: 0;
+    color: var(--garden-ink-2);
+    font-family: var(--garden-font-ui);
+    svg { display: none; }
+    p { margin: 0; text-align: left; font-size: 1rem; }
+  }
+}
+
+@media (min-width: 700px) {
+  body[data-slug="index"] .search {
+    left: calc((100vw - 40rem) / 2 + 17px);
+    right: calc((100vw - 40rem) / 2 + 17px);
+  }
+}

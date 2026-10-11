@@ -1,0 +1,23 @@
+name: digital-garden
+services:
+  sync:
+    build:
+      context: .
+      dockerfile: docker/sync.Dockerfile
+    user: "${GARDEN_UID:-1001}:${GARDEN_GID:-1001}"
+    environment:
+      GIT_SSH_COMMAND: "ssh -i /run/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/data/known_hosts"
+    volumes:
+      - "${VAULT_PATH}:/vault"
+      - "${DATA_PATH:-./data}:/data"
+      - "${DEPLOY_KEY_PATH}:/run/deploy_key:ro"
+    restart: unless-stopped
+  web:
+    image: nginx:1.27-alpine
+    depends_on: [sync]
+    ports:
+      - "${HTTP_PORT:-127.0.0.1:8093}:80"
+    volumes:
+      - "${DATA_PATH:-./data}:/data:ro"
+      - "./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro"
+    restart: unless-stopped

@@ -1,0 +1,22 @@
+// The Reference Page: design tokens. quartz.config.ts mirrors the colors (scripts/tokens-sync.test.mjs).
+:root {
+  --garden-paper: #f4f5f0;
+  --garden-ink: #16181a;
+  --garden-ink-2: #4a4f52;
+  --garden-rule: #d5d8d2;
+  --garden-oxblood: #7a1f1f;
+  --garden-gilt: #a98a3e;
+  --garden-onionskin: rgba(244, 245, 240, 0.88);
+  --garden-radius: 6px;
+  --garden-font-text: "Literata Variable", Georgia, serif;
+  --garden-font-ui: "Source Sans 3 Variable", system-ui, sans-serif;
+}
+:root[saved-theme="dark"] {
+  --garden-paper: #121314;
+  --garden-ink: #e7e6df;
+  --garden-ink-2: #a3a39b;
+  --garden-rule: #2a2c2d;
+  --garden-oxblood: #d2655e;
+  --garden-gilt: #c9a659;
+  --garden-onionskin: rgba(18, 19, 20, 0.88);
+}

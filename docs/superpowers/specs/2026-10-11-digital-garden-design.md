@@ -45,7 +45,7 @@ HTTP on the container's internal port, proxied at `/api/`.
 - `POST /api/sync` pulls and rebuilds. Responds `202` and starts a build; `200 {upToDate: true}` when `behind == 0` (no-op); `409` if a build is already running. Requires header `X-Garden: 1` (cheap CSRF guard; the endpoint is also tailnet-only).
 - One build at a time (lock file). Build timeout 15 minutes.
 - Build output goes to a fresh `/data/builds/<id>/`, then `ln -sfn` swaps `current`. Last two builds are kept. A failed build never touches `current`; `status.json` records the error and the page shows "Last sync failed" with the reason.
-- The nightly timer calls `POST /api/sync?source=timer` at 04:30 (after the 04:00 backups), `Persistent=true`. It rebuilds only if `behind > 0`.
+- The nightly timer calls `POST /api/sync?source=timer` at 05:00 (after the 04:00 budget-tracker and 04:30 Quark backups), `Persistent=true`. It rebuilds only if `behind > 0`.
 - The UI button: disabled and labelled "Up to date" with the last-synced time when `behind == 0`; "Sync · N new commits" when behind; progress state while building; error state with retry on failure.
 - Git access uses a dedicated read-only GitHub deploy key mounted read-only into `sync`. Evan adds the public key to the repo's deploy keys (Settings, Deploy keys, leave "Allow write access" unticked). Reusing his personal key is rejected because it grants write access.
 
@@ -79,7 +79,7 @@ Authoritative design intent is the surface brief's direction contract. Decisions
 
 ## 7. PWA
 
-Web manifest (standalone display; a manifest holds one background color, so it uses the light paper color and the inline theme script repaints before first paint in dark), apple-touch-icon, `apple-mobile-web-app-capable` and status-bar meta, safe-area insets (`env(safe-area-inset-*)`). Service worker: precache the shell, fonts and icons; runtime-cache visited notes and their images with stale-while-revalidate, capped at 150 MB and 300 entries; the build id in `status.json` invalidates the note cache on a new sync. Offline behaviour is read-what-you-have; the app says so plainly when a note is not cached. Icon: a ribbon mark, designed in the build phase.
+Web manifest (standalone display; a manifest holds one background color, so it uses the light paper color and the inline theme script repaints before first paint in dark), apple-touch-icon, `apple-mobile-web-app-capable` and status-bar meta, safe-area insets (`env(safe-area-inset-*)`). Service worker: precache the shell, fonts and icons; runtime-cache visited notes and their images with stale-while-revalidate, capped at 300 entries (the originally specified 150 MB cap is not enforced: the Cache API has no cheap size query, and the entry cap bounds it in practice); the build id in `status.json` invalidates the note cache on a new sync. Offline behaviour is read-what-you-have; the app says so plainly when a note is not cached. Icon: a ribbon mark, designed in the build phase.
 
 ## 8. Deployment on `pc`
 
