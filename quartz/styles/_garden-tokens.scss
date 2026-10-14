@@ -9,7 +9,9 @@
   --garden-bold: #1d4f6b;
   --garden-italic: #6b3f7a;
   --garden-mark: #f3e08a;
-  --garden-onionskin: rgba(244, 245, 240, 0.88);
+  // iOS draws the clock in white over a translucent status bar, so the band under it is ink in the light theme
+  --garden-statusband: #16181a;
+  --garden-onionskin: rgba(244, 245, 240, 0.94);
   --garden-radius: 6px;
   --garden-font-text: "Literata Variable", Georgia, serif;
   --garden-font-ui: "Source Sans 3 Variable", system-ui, sans-serif;
@@ -24,5 +26,6 @@
   --garden-bold: #7fc4e6;
   --garden-italic: #cfa6e2;
   --garden-mark: #5a4a12;
-  --garden-onionskin: rgba(18, 19, 20, 0.88);
+  --garden-statusband: #121314;
+  --garden-onionskin: rgba(18, 19, 20, 0.94);
 }

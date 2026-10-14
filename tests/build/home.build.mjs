@@ -28,6 +28,6 @@ test("build emits the home page and a small garden index with git dates", async 
   assert.ok(index.every((e) => !e.slug.includes(".obsidian")))
   const home = await readFile(path.join(out, "index.html"), "utf8")
   assert.match(home, /data-garden-home/)
-  assert.match(home, /data-area="Bible"/)
+  assert.match(home, /data-explorer/)
   assert.match(home, /class="[^"]*\bsearch\b/)
 })

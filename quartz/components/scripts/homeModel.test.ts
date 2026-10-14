@@ -68,3 +68,15 @@ test("listFolder shows one level: subfolders with note counts, then notes direct
   assert.deepEqual(sub.folders, [{ name: "T", path: "A/S/T", count: 1 }])
   assert.deepEqual(sub.notes.map((n) => n.title), ["Deep one"])
 })
+
+test("listFolder at the vault root lists top-level folders with counts, then root notes", () => {
+  const idx: IndexEntry[] = [
+    { slug: "r", title: "Root note", folder: "", path: "", modified: 1 },
+    { slug: "a/x", title: "X", folder: "A", path: "A", modified: 1 },
+    { slug: "a/s/1", title: "Deep", folder: "A", path: "A/S", modified: 1 },
+    { slug: "b/1", title: "B", folder: "B", path: "B", modified: 1 },
+  ]
+  const root = listFolder(idx, "")
+  assert.deepEqual(root.folders, [{ name: "A", path: "A", count: 2 }, { name: "B", path: "B", count: 1 }])
+  assert.deepEqual(root.notes.map((n) => n.title), ["Root note"])
+})

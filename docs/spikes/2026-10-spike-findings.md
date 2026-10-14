@@ -1,6 +1,6 @@
-# Spike findings (2026-10-11), real vault on `pc`
+# Spike findings (2026-10-11), real vault on the home server
 
-Stock Quartz v4.5.2 against `LifeVault` (2,969 markdown files), built in `node:22-bookworm-slim` on `pc`.
+Stock Quartz v4.5.2 against a real vault (2,969 markdown files), built in `node:22-bookworm-slim` on the home server.
 
 ## Quartz build
 - Parse 37 s, emit about 4 min, total about 4.5 min cold (includes `npm ci`). 7,576 files emitted, 724 MB output. Acceptable for a nightly and on-demand rebuild.

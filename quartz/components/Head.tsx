@@ -28,7 +28,7 @@ export default (() => {
         <link rel="apple-touch-icon" href="/static/icons/icon-180.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Garden" />
         <meta name="theme-color" content="#f4f5f0" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#121314" media="(prefers-color-scheme: dark)" />

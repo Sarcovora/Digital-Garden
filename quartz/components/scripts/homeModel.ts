@@ -34,7 +34,7 @@ export function listFolder(index: IndexEntry[], path: string) {
   const notes: IndexEntry[] = []
   for (const e of index) {
     if (e.path === path) notes.push(e)
-    else if (e.path.startsWith(prefix) && path !== "" ) {
+    else if (path === "" || e.path.startsWith(prefix)) {
       const name = e.path.slice(prefix.length).split("/")[0]
       subs.set(name, (subs.get(name) ?? 0) + 1)
     }

@@ -1,17 +1,13 @@
 import { test, expect } from "@playwright/test"
 
-test("first run: search line, fallback recents, no ribbon, eight tabs of at least 44pt", async ({ page }) => {
+test("first run: search line, fallback recents, no ribbon, no thumb tabs", async ({ page }) => {
   await page.goto("/")
   await expect(page.locator(".search-button")).toBeVisible()
   await expect(page.locator("[data-recents] li").first()).toBeVisible()
   await expect(page.locator("[data-recents-title]")).toHaveText("Recently updated")
   await expect(page.locator("[data-resume]")).toBeHidden()
   await expect(page.locator("[data-pinned-hint]")).toBeVisible()
-  await expect(page.locator(".g-thumb")).toHaveCount(8)
-  for (const t of await page.locator(".g-thumb").all()) {
-    const box = await t.boundingBox()
-    expect(box!.height).toBeGreaterThanOrEqual(44)
-  }
+  await expect(page.locator(".g-thumb, .g-thumbs")).toHaveCount(0)
 })
 test("search sits at the bottom of the screen within thumb reach", async ({ page }) => {
   await page.goto("/")
@@ -49,20 +45,25 @@ test("the home page works with localStorage blocked (Review Focus 5)", async ({ 
   await expect(page.locator("[data-recents] li").first()).toBeVisible()
 })
 
-test("a thumb tab lists subfolders first and drills down in place, with a way back up", async ({ page }) => {
+test("the home page has a file explorer: top-level folders first, drilling down in place with a way back up", async ({ page }) => {
   await page.goto("/")
-  await page.locator('.g-thumb[data-area="00 - Maps of Content"]').click()
-  const sheet = page.locator("[data-sheet]")
-  await expect(sheet).toBeVisible()
-  await expect(sheet.locator(".g-list li").first()).toContainText("Nested")
-  await expect(sheet).toContainText("Home Map")
-  await expect(sheet).not.toContainText("Nested Leaf")
-  await sheet.getByRole("button", { name: /Nested/ }).click()
-  await expect(sheet).toContainText("Nested Leaf")
-  await expect(sheet).not.toContainText("Home Map")
-  await sheet.getByRole("button", { name: /↑/ }).click()
-  await expect(sheet).toContainText("Home Map")
-  await sheet.getByRole("button", { name: /Nested/ }).click()
-  await sheet.getByRole("link", { name: "Nested Leaf" }).click()
+  const ex = page.locator("[data-explorer]")
+  await expect(ex).toBeVisible()
+  await expect(ex.getByRole("button", { name: /00 - Maps of Content/ })).toBeVisible()
+  await expect(ex.getByRole("button", { name: /Bible/ })).toBeVisible()
+  await ex.getByRole("button", { name: /00 - Maps of Content/ }).click()
+  await expect(ex.getByRole("button", { name: /Nested/ })).toBeVisible() // subfolders first
+  await expect(ex).toContainText("Home Map")
+  await ex.getByRole("button", { name: /Nested/ }).click()
+  await expect(ex).toContainText("Nested Leaf")
+  await expect(ex).not.toContainText("Home Map")
+  await ex.getByRole("button", { name: /↑/ }).click()
+  await expect(ex).toContainText("Home Map")
+  await ex.getByRole("button", { name: /Nested/ }).click()
+  await ex.getByRole("link", { name: "Nested Leaf" }).click()
   await expect(page).toHaveURL(/Nested\/Leaf/)
+})
+test("explorer rows are at least 44pt tall", async ({ page }) => {
+  await page.goto("/")
+  for (const r of await page.locator("[data-explorer] li > *").all()) expect((await r.boundingBox())!.height).toBeGreaterThanOrEqual(44)
 })

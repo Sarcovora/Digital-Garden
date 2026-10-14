@@ -25,6 +25,7 @@ test("build emits manifest, icons, and a build-stamped service worker; pages car
     assert.match(html, /rel="apple-touch-icon" href="\/static\/icons\/icon-180\.png"/, page)
     assert.match(html, /apple-mobile-web-app-capable/, page)
     assert.match(html, /viewport-fit=cover/, page)
+    assert.match(html, /status-bar-style" content="black-translucent"/, page)
     assert.match(html, /name="theme-color"/, page)
   }
 })

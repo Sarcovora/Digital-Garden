@@ -1,7 +1,7 @@
 # Device checklist (iPhone standalone PWA)
 
-Run after the three setup steps are done (deploy key added on GitHub, `tailscale serve` run on `pc`, `deploy/install-systemd.sh` run on `pc`).
-URL: `https://core-v21.<tailnet-domain>:8444/`
+Run after the three setup steps are done (deploy key added on GitHub, `tailscale serve` run on the server, `deploy/install-systemd.sh` run on the server).
+URL: `https://<host>.<tailnet-domain>:8444/`
 
 Standalone PWAs are a different code path from Safari tabs, so everything below must be checked **in the installed app**, not in a Safari tab.
 
@@ -34,9 +34,9 @@ Standalone PWAs are a different code path from Safari tabs, so everything below 
 
 ## Sync
 - [ ] With nothing new on GitHub, the Sync button is greyed out and says "Up to date" with a time.
-- [ ] Push a change to `LifeVault`, reopen the panel: it says "Sync · 1 new commit" and is tappable.
+- [ ] Push a change to your vault repository, reopen the panel: it says "Sync · 1 new commit" and is tappable.
 - [ ] Tap it: it shows "Syncing…", then "Reload". Reload shows the new note.
-- [ ] The next morning: the 05:00 timer ran (`systemctl list-timers digital-garden-sync.timer` on `pc`).
+- [ ] The next morning: the 05:00 timer ran (`systemctl list-timers digital-garden-sync.timer` on the server).
 
 ## Offline
 - [ ] Turn on airplane mode. Notes you already opened still open. An unopened note says it is not saved for offline reading yet.

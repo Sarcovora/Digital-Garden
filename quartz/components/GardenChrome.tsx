@@ -5,10 +5,10 @@ import { QuartzComponent, QuartzComponentConstructor } from "./types"
 
 const GardenChrome: QuartzComponent = () => (
   <>
+  <div class="g-statusband" data-statusband aria-hidden="true"></div>
   <div class="garden-chrome" data-garden-chrome>
     <div class="g-progress" aria-hidden="true"></div>
     <div class="g-actions" hidden>
-      <button type="button" data-action="home">Home</button>
       <button type="button" data-action="back">Back</button>
       <button type="button" data-action="search">Search</button>
       <button type="button" data-action="backlinks">Backlinks</button>
@@ -30,17 +30,24 @@ const GardenChrome: QuartzComponent = () => (
       <span aria-hidden="true"></span>
     </button>
   </div>
+  <div class="g-dock" data-dock>
   <button type="button" class="g-outline-toggle" data-outline-toggle aria-label="Outline" aria-expanded="false" hidden>
     <span aria-hidden="true"></span>
   </button>
+  <a href="/" class="g-home-toggle" data-home-button aria-label="Home">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg>
+  </a>
+  </div>
   <div class="g-outline-scrim" data-outline-scrim hidden></div>
   <nav class="g-outline" data-outline aria-label="Outline of this page" hidden>
     <ul data-outline-list></ul>
   </nav>
-  <div class="g-toast" data-toast role="status" aria-live="polite" hidden></div>
   <div class="g-scrim" data-sheet-scrim hidden></div>
   <div class="g-sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="g-sheet-title" hidden>
-    <h2 class="g-sheet-title" id="g-sheet-title" data-sheet-title></h2>
+    <div class="g-sheet-head" data-sheet-head>
+      <h2 class="g-sheet-title" id="g-sheet-title" data-sheet-title></h2>
+      <button type="button" class="g-sheet-close" data-sheet-close>Close</button>
+    </div>
     <div class="g-sheet-body" data-sheet-body tabIndex={-1}></div>
     <a class="g-sheet-open" data-sheet-open hidden>Open</a>
   </div>

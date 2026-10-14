@@ -8,3 +8,7 @@ test-results
 playwright-report
 .superpowers
 .impeccable/review/
+tsconfig.tsbuildinfo
+.impeccable/
+docs/superpowers/
+.DS_Store

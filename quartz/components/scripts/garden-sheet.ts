@@ -27,6 +27,8 @@ export function initSheet() {
   if (!sheet || !scrim) return
   const title = sheet.querySelector<HTMLElement>("[data-sheet-title]")!
   const body = sheet.querySelector<HTMLElement>("[data-sheet-body]")!
+  const head = sheet.querySelector<HTMLElement>("[data-sheet-head]")!
+  const closeBtn = sheet.querySelector<HTMLElement>("[data-sheet-close]")!
   const openLink = sheet.querySelector<HTMLAnchorElement>("[data-sheet-open]")!
   let invoker: HTMLElement | null = null
   let token = 0
@@ -128,5 +130,32 @@ export function initSheet() {
   }
   on(document, "keydown", onKey)
   on(scrim, "click", close)
+  on(closeBtn, "click", close)
   on(openLink, "click", () => { document.body.classList.remove("g-sheet-active"); sheet.hidden = true; scrim.hidden = true })
+
+  // Drag the title row down to dismiss: the sheet follows the finger, then goes (far enough or fast enough) or snaps back.
+  let startY: number | null = null
+  let startT = 0
+  let lastDy = 0
+  on(head, "pointerdown", (e: PointerEvent) => {
+    if ((e.target as Element).closest("[data-sheet-close]")) return
+    startY = e.clientY; startT = e.timeStamp; lastDy = 0
+    sheet.style.transition = "none"
+    try { head.setPointerCapture(e.pointerId) } catch {}
+  })
+  on(head, "pointermove", (e: PointerEvent) => {
+    if (startY === null) return
+    lastDy = Math.max(0, e.clientY - startY)
+    sheet.style.transform = `translateY(${lastDy}px)`
+  })
+  const release = (e: PointerEvent) => {
+    if (startY === null) return
+    const dy = Math.max(0, e.clientY - startY)
+    const fast = dy / Math.max(1, e.timeStamp - startT) > 0.6
+    startY = null
+    sheet.style.transition = ""
+    if (dy > 80 || (dy > 24 && fast)) { sheet.style.transform = ""; close() } else sheet.style.transform = ""
+  }
+  on(head, "pointerup", release)
+  on(head, "pointercancel", release)
 }

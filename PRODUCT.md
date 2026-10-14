@@ -8,11 +8,11 @@ web
 
 ## Stack
 
-Quartz 4 as the rendering engine (wikilinks, embeds, callouts, backlinks, math), with a fully custom theme and a custom mobile navigation shell. Static build served by nginx on the home server, plus a small sync service. Installed as an iPhone standalone PWA. Chosen by the user over a fully custom app and over Perlite.
+Quartz 4 as the rendering engine (wikilinks, embeds, callouts, backlinks, math), with a fully custom theme and a custom mobile navigation shell. Static build served by nginx, plus a small sync service. Installed as an iPhone standalone PWA. Chosen by the user over a fully custom app and over Perlite.
 
 ## Users
 
-One person, Evan, reading his own Obsidian vault (`LifeVault`, ~2,970 notes, ~1,360 images/PDFs) on an iPhone installed as a standalone PWA; iPad is a distant second. No desktop optimization: on a Mac he opens the vault in Obsidian directly. Four real jobs, all confirmed: quick lookup of a specific note, long study reading (dense CS/math notes with LaTeX, callouts, diagrams), Bible and devotional reading, and wandering through wikilinks and backlinks from the Maps of Content.
+One reader, on their own Obsidian vault (thousands of notes, images and PDFs), on an iPhone installed as a standalone PWA; iPad is a distant second. No desktop optimization: on a desktop the reader opens the vault in Obsidian directly. Four jobs: quick lookup of a specific note, long study reading (dense notes with LaTeX, callouts, diagrams), devotional or Bible-style reading, and wandering through wikilinks and backlinks from maps of content.
 
 ## Product Purpose
 
@@ -24,7 +24,7 @@ Not Obsidian Publish, not a docs site, not an Obsidian clone. It is a private re
 
 ## Operating Context
 
-The vault is a git checkout of `Sarcovora/LifeVault` on the home server (`pc`), pulled daily by a timer and on demand by a sync control. Reached over Tailscale only (private Tailscale Serve HTTPS). The vault is edited elsewhere (Obsidian on Mac and iPad) and pushed to GitHub by the user's own scripts.
+The vault is a git checkout of a private repository on a home server, pulled daily by a timer and on demand by a sync control. Reached over a private network such as Tailscale (Tailscale Serve HTTPS). The vault is edited elsewhere (Obsidian on desktop and tablet) and pushed to git by the reader.
 
 ## Capabilities and Constraints
 
@@ -40,7 +40,7 @@ The vault is a git checkout of `Sarcovora/LifeVault` on the home server (`pc`), 
 
 ## Evidence on Hand
 
-The real vault on `pc` at `~/DigitalGarden/LifeVault`. Note content is personal; do not fabricate sample notes in any shipped surface, and do not publish its contents anywhere.
+A real vault on the host. Note content is personal; the repository ships only a synthetic fixture vault and an original demo vault (`examples/demo-vault`), and never publishes real notes.
 
 ## Product Principles
 

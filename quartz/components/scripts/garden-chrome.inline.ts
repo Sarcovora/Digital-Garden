@@ -20,15 +20,19 @@ let depth = 0
 let popped = false
 window.addEventListener("popstate", () => { popped = true })
 document.addEventListener("nav", () => {
-  if (popped) { depth = Math.max(1, depth - 1); popped = false } else depth++
+  if (popped) {
+    depth = Math.max(1, depth - 1); popped = false
+    const body = document.getElementById("quartz-body")
+    if (body && !reduced()) {
+      body.classList.add("g-entering")
+      setTimeout(() => body.classList.remove("g-entering"), 160)
+    }
+  } else depth++
 })
 const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches
 const goBack = () => {
   if (depth <= 1) return void location.assign("/")
-  const body = document.getElementById("quartz-body")
-  if (!body || reduced()) return history.back()
-  body.classList.add("g-leaving")
-  setTimeout(() => { body.classList.remove("g-leaving"); history.back() }, 120)
+  history.back() // go at once; the page that arrives slides in (see the nav handler)
 }
 ;(window as any).gardenBack = goBack
 
@@ -76,18 +80,15 @@ document.addEventListener("nav", () => {
 
   // ---- pinning: from the menu, or by long-pressing the note title ----
   const pinBtn = chrome.querySelector<HTMLElement>('[data-action="pin"]')!
-  const toast = document.querySelector<HTMLElement>("[data-toast]")!
-  let toastTimer: ReturnType<typeof setTimeout> | undefined
-  const showToast = (text: string) => {
-    toast.textContent = text
-    toast.hidden = false
-    if (toastTimer) clearTimeout(toastTimer)
-    toastTimer = setTimeout(() => (toast.hidden = true), 1600)
+  // The state is shown, not announced: the menu label flips, and a pinned note carries a small ribbon by its title.
+  const refreshPin = () => {
+    const pinned = store.getPins().includes(slugNow())
+    pinBtn.textContent = pinned ? "Unpin note" : "Pin note"
+    document.body.toggleAttribute("data-pinned", pinned && isNote())
   }
-  const refreshPin = () => { pinBtn.textContent = store.getPins().includes(slugNow()) ? "Unpin note" : "Pin note" }
   const togglePin = () => {
     if (!isNote()) return
-    showToast(store.togglePin(slugNow()) ? "Pinned" : "Unpinned")
+    store.togglePin(slugNow())
     refreshPin()
   }
   refreshPin()
@@ -116,7 +117,6 @@ document.addEventListener("nav", () => {
     }
     setOpen(false)
     if (action === "search") document.querySelector<HTMLButtonElement>(".search-button")?.click()
-    else if (action === "home") location.assign("/")
     else if (action === "back") goBack()
     else if (action === "backlinks") {
       const items = Array.from(document.querySelectorAll<HTMLAnchorElement>(".backlinks a")).map((a) => ({

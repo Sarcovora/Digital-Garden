@@ -1,15 +1,15 @@
 {
-  "name": "@jackyzha0/quartz",
-  "description": "🌱 publish your digital garden and notes as a website",
+  "name": "digital-garden",
+  "description": "A calm, phone-first, read-only reading room for your Obsidian vault, built on Quartz.",
   "private": true,
-  "version": "4.5.2",
+  "version": "1.0.0",
   "type": "module",
-  "author": "jackyzha0 <j.zhao2k19@gmail.com>",
+  "author": "Sarcovora",
   "license": "MIT",
-  "homepage": "https://quartz.jzhao.xyz",
+  "homepage": "https://github.com/Sarcovora/Digital-Garden",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jackyzha0/quartz.git"
+    "url": "git+https://github.com/Sarcovora/Digital-Garden.git"
   },
   "scripts": {
     "quartz": "./quartz/bootstrap-cli.mjs",
@@ -21,19 +21,20 @@
     "test:build": "node --test tests/build/*.build.mjs",
     "test:e2e": "playwright test",
     "postinstall": "node scripts/copy-assets.mjs",
-    "icons": "node scripts/make-icons.mjs"
+    "icons": "node scripts/make-icons.mjs",
+    "screenshots": "node scripts/demo-screenshots.mjs"
   },
   "engines": {
     "npm": ">=10.9.2",
     "node": ">=22"
   },
   "keywords": [
-    "site generator",
-    "ssg",
     "digital-garden",
+    "obsidian",
+    "pwa",
+    "quartz",
     "markdown",
-    "blog",
-    "quartz"
+    "self-hosted"
   ],
   "bin": {
     "quartz": "./quartz/bootstrap-cli.mjs"

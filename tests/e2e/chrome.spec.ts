@@ -13,18 +13,38 @@ test("reading page has no persistent chrome except the floating control", async 
 test("floating control expands to search, backlinks, sync, theme, back", async ({ page }) => {
   await page.goto("/Alpha-Note")
   await openMenu(page)
-  for (const a of ["home", "search", "backlinks", "sync", "theme", "back"])
+  for (const a of ["search", "backlinks", "sync", "theme", "back"])
     await expect(page.locator(`[data-garden-chrome] [data-action="${a}"]`)).toBeVisible()
   await expect(page.locator("[data-toggle]")).toHaveAttribute("aria-expanded", "true")
 })
-test("Home takes you to the home screen from a note, and is not offered on the home screen", async ({ page }) => {
-  await page.goto("/Beta-Note")
+test("Home is not in the menu or on the home screen, and takes you home from a note", async ({ page }) => {
+  await page.goto("/Long-Note")
+  const home = page.locator("[data-home-button]")
+  await expect(home).toBeVisible()
   await openMenu(page)
-  await page.locator('[data-action="home"]').click()
+  await expect(page.locator('[data-action="home"]')).toHaveCount(0)
+  await page.locator("[data-toggle]").click()
+  await home.click()
   await expect(page).toHaveURL(/\/$/)
   await expect(page.locator("[data-garden-home]")).toBeVisible()
+  await expect(page.locator("[data-home-button]")).toBeHidden()
+})
+test("pinning changes the menu label and shows no timed toast", async ({ page }) => {
+  await page.goto("/Alpha-Note")
   await openMenu(page)
-  await expect(page.locator('[data-action="home"]')).toBeHidden()
+  await page.locator('[data-action="pin"]').click()
+  await openMenu(page)
+  await expect(page.locator('[data-action="pin"]')).toHaveText("Unpin note")
+  await expect(page.locator("[data-toast]")).toHaveCount(0)
+})
+test("Back navigates at once instead of waiting for an exit animation", async ({ page }) => {
+  await page.goto("/")
+  await page.locator("[data-recents] a").first().click()
+  await expect(page.locator("[data-home-button]")).toBeVisible() // now on a note
+  await openMenu(page)
+  await page.locator('[data-action="back"]').click()
+  expect(await page.evaluate(() => document.getElementById("quartz-body")!.classList.contains("g-leaving"))).toBe(false)
+  await expect(page).toHaveURL(/\/$/)
 })
 test("every control target is at least 44pt", async ({ page }) => {
   await page.goto("/Alpha-Note")
@@ -96,26 +116,62 @@ test("resuming from home scrolls back to the saved position", async ({ page }) =
   await expect(page).toHaveURL(/Long-Note/)
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(300)
 })
-test("the menu button stays on screen while scrolling, and the end of the page still clears it", async ({ page }) => {
+test("the menu button is at the top right and stays there while scrolling; the page's last line clears the bottom dock", async ({ page }) => {
   await page.goto("/Long-Note")
+  const vp = page.viewportSize()!
   const toggle = page.locator("[data-toggle]")
+  const tb = (await toggle.boundingBox())!
+  expect(tb.y).toBeLessThan(70); expect(tb.x + tb.width).toBeGreaterThan(vp.width - 40)
   await page.evaluate(() => window.scrollTo({ top: 900, behavior: "instant" }))
   await expect(toggle).toBeInViewport()
-  await page.evaluate(() => window.scrollTo({ top: 500, behavior: "instant" }))
-  await expect(toggle).toBeInViewport()
-  await expect(page.locator("[data-garden-chrome]")).not.toHaveClass(/g-away/)
+  await toggle.click()
+  const panel = (await page.locator(".g-actions").boundingBox())!
+  expect(panel.y).toBeGreaterThan(tb.y + tb.height - 2) // opens downward, under the button
+  await toggle.click()
   await page.evaluate(() => window.scrollTo({ top: 99999, behavior: "instant" }))
   const last = await page.locator("article").evaluate((el) => el.getBoundingClientRect().bottom)
-  const tb = await toggle.boundingBox()
-  expect(last).toBeLessThan(tb!.y) // the final line of the page sits above the button
+  const dock = (await page.locator("[data-dock]").boundingBox())!
+  expect(last).toBeLessThan(dock.y) // the final line of the page sits above the bottom buttons
 })
-test("the outline button sits at the top right; it opens a right-hand outline, jumps to a heading and closes", async ({ page }) => {
+test("Home and Outline sit together at the bottom right (thumb reach), always on screen, and are not at the top", async ({ page }) => {
+  await page.goto("/Long-Note")
+  const vp = page.viewportSize()!
+  for (const sel of ["[data-home-button]", "[data-outline-toggle]"]) {
+    const b = (await page.locator(sel).boundingBox())!
+    expect(b.y, sel).toBeGreaterThan(vp.height - 110)
+    expect(b.x, sel).toBeGreaterThan(vp.width / 2)
+    expect(b.width, sel).toBeGreaterThanOrEqual(44)
+  }
+  const home = (await page.locator("[data-home-button]").boundingBox())!
+  const outline = (await page.locator("[data-outline-toggle]").boundingBox())!
+  expect(outline.x).toBeGreaterThan(home.x) // outline takes the corner, Home beside it
+  await page.evaluate(() => window.scrollTo({ top: 900, behavior: "instant" }))
+  await expect(page.locator("[data-home-button]")).toBeInViewport()
+  await expect(page.locator("[data-outline-toggle]")).toBeInViewport()
+})
+test("reading progress is a bar across the top of the screen, filling as you scroll", async ({ page }) => {
+  await page.goto("/Long-Note")
+  const bar = page.locator(".g-progress")
+  const vp = page.viewportSize()!
+  const b = await bar.evaluate((e) => ({ w: (e as HTMLElement).offsetWidth, h: (e as HTMLElement).offsetHeight, top: e.getBoundingClientRect().top }))
+  expect(b.w).toBeGreaterThan(vp.width - 2); expect(b.h).toBeLessThanOrEqual(5); expect(b.top).toBeLessThan(60)
+  const scale = () => bar.evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a)
+  const start = await scale()
+  await page.evaluate(() => window.scrollTo({ top: 99999, behavior: "instant" }))
+  await expect.poll(scale).toBeGreaterThan(0.9)
+  expect(start).toBeLessThan(0.1)
+})
+test("the app fills the screen under the clock: translucent status bar, a status band, and content padded below it", async ({ page }) => {
+  await page.goto("/Alpha-Note")
+  expect(await page.locator('meta[name="apple-mobile-web-app-status-bar-style"]').getAttribute("content")).toBe("black-translucent")
+  const band = page.locator("[data-statusband]")
+  await expect(band).toHaveCount(1)
+  expect(await band.evaluate((e) => getComputedStyle(e).position)).toBe("fixed")
+})
+test("the outline opens a right-hand panel, jumps to a heading and closes", async ({ page }) => {
   await page.goto("/Long-Note")
   const btn = page.locator("[data-outline-toggle]")
   await expect(btn).toBeVisible()
-  const box = await btn.boundingBox()
-  expect(box!.y).toBeLessThan(80)
-  expect(box!.width).toBeGreaterThanOrEqual(44)
   await page.evaluate(() => window.scrollTo({ top: 400, behavior: "instant" }))
   await expect(btn).toBeInViewport() // always on screen
   await btn.click()
@@ -162,7 +218,6 @@ test("the menu pins and unpins the current note, and home lists it", async ({ pa
   await expect(pin).toHaveText("Pin note")
   await pin.click()
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("garden:pins")!))).toEqual(["Alpha-Note"])
-  await expect(page.locator("[data-toast]")).toContainText("Pinned")
   await page.goto("/")
   await expect(page.locator("[data-pinned] li")).toHaveCount(1)
   await page.goto("/Alpha-Note")

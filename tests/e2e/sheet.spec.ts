@@ -44,17 +44,6 @@ test("links and images inside the preview resolve against the previewed note, no
   expect(await body.locator("a").first().evaluate((a) => (a as HTMLAnchorElement).pathname)).toBe("/Beta-Note")
   expect(await body.locator("img").first().evaluate((i) => new URL((i as HTMLImageElement).src).pathname)).toBe("/99---Meta/Files/pic.png")
 })
-test("area tab opens a sheet listing that area's notes", async ({ page }) => {
-  await page.goto("/")
-  await page.locator('.g-thumb[data-area="Bible"]').click()
-  await expect(page.locator("[data-sheet]")).toContainText("1 Cor. 12")
-  await expect(page.locator("[data-sheet] a", { hasText: "1 Cor. 12" })).toHaveAttribute("href", /Bible\/1-Cor/)
-})
-test("an area with no notes says so", async ({ page }) => {
-  await page.goto("/")
-  await page.locator('.g-thumb[data-area="98 - Archives"]').click()
-  await expect(page.locator("[data-sheet]")).toContainText("Nothing here yet")
-})
 test("backlinks action lists linking notes", async ({ page }) => {
   await page.goto("/Alpha-Note")
   await page.locator("[data-toggle]").click()
@@ -87,4 +76,30 @@ test("the sheet has no drag grip; tapping outside is how you dismiss it", async 
   await page.locator("article sup.g-ref").first().click()
   await expect(page.locator("[data-sheet]")).toBeVisible()
   await expect(page.locator("[data-sheet-grip], .g-sheet-grip")).toHaveCount(0)
+})
+
+test("the sheet has a labelled Close control that dismisses it", async ({ page }) => {
+  await page.goto("/Verse-Embed")
+  await page.locator("article sup.g-ref").first().click()
+  await expect(page.locator("[data-sheet]")).toBeVisible()
+  const close = page.getByRole("button", { name: "Close" })
+  expect((await close.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  await close.click()
+  await expect(page.locator("[data-sheet]")).toBeHidden()
+})
+test("dragging the sheet's title row down follows the finger, then dismisses past the threshold; a short drag snaps back", async ({ page }) => {
+  await page.goto("/Verse-Embed")
+  await page.locator("article sup.g-ref").first().click()
+  const sheet = page.locator("[data-sheet]")
+  await expect(sheet).toBeVisible()
+  const head = await page.locator("[data-sheet-head]").boundingBox()
+  const x = head!.x + 20, y = head!.y + 10
+  const fire = (type: string, cy: number) => page.evaluate(({ type, x, cy }) => document.querySelector("[data-sheet-head]")!.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: cy, pointerId: 7, bubbles: true })), { type, x, cy })
+  await fire("pointerdown", y); await fire("pointermove", y + 40)
+  expect(await sheet.evaluate((el) => (el as HTMLElement).style.transform)).toContain("40px") // tracks the finger
+  await fire("pointerup", y + 40)
+  await expect(sheet).toBeVisible() // below the threshold: snaps back
+  expect(await sheet.evaluate((el) => (el as HTMLElement).style.transform)).toBe("")
+  await fire("pointerdown", y); await fire("pointermove", y + 140); await fire("pointerup", y + 140)
+  await expect(sheet).toBeHidden()
 })

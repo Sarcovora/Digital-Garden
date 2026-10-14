@@ -1,18 +1,18 @@
 .garden-chrome {
   position: fixed;
-  right: 16px;
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  right: 12px;
+  top: calc(env(safe-area-inset-top) + 8px);
   z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
+  .g-toggle { order: 0; }
+  .g-actions { order: 1; }
+  .g-sync-panel { order: 2; }
 }
 // On the home screen the search line owns the bottom edge, so the control sits above it.
-body[data-slug="index"] .garden-chrome {
-  bottom: calc(76px + env(safe-area-inset-bottom));
-  [data-action="search"], [data-action="home"] { display: none; }
-}
+body[data-slug="index"] .garden-chrome [data-action="search"] { display: none; }
 // On note pages search is summoned from the control, never shown as a persistent field.
 body:not([data-slug="index"]) .search > .search-button {
   display: none;
@@ -83,13 +83,22 @@ body:not([data-slug="index"]) .search > .search-button {
 .g-sync-panel p { padding-right: 32px; }
 .g-progress {
   position: fixed;
+  left: 0;
   right: 0;
-  top: 0;
-  width: 2px;
-  height: 100vh;
+  top: env(safe-area-inset-top);
+  height: 3px;
   background: var(--garden-gilt);
-  transform-origin: top;
-  transform: scaleY(var(--p, 0));
+  transform-origin: left;
+  transform: scaleX(var(--p, 0));
+  pointer-events: none;
+  z-index: 41;
+}
+.g-statusband {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--garden-statusband);
+  z-index: 40;
   pointer-events: none;
 }
 sup.g-ref {
@@ -148,8 +157,30 @@ sup.g-ref {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .g-sheet { background: var(--garden-paper); }
 }
+.g-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  touch-action: none; // the title row is the drag handle: the browser must not scroll or pull-to-refresh from it
+  cursor: grab;
+}
+.g-sheet-close {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  margin-right: -8px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--garden-ink-2);
+  font-family: var(--garden-font-ui);
+  font-size: calc(0.95 * 17px);
+  cursor: pointer;
+  &:active { background: color-mix(in srgb, var(--garden-gilt) 22%, transparent); }
+}
 .g-sheet-title {
-  margin: 0 0 4px;
+  margin: 0;
   font-size: calc(0.95 * 17px);
   color: var(--garden-ink-2);
 }
@@ -186,8 +217,9 @@ sup.g-ref {
 // Swipe-back: a short flat page slide (about 180 ms, no springs).
 #quartz-body {
   transition: transform 0.12s ease, opacity 0.12s ease;
-  &.g-leaving { transform: translateX(24px); opacity: 0; }
+  &.g-entering { animation: g-arrive 0.12s ease-out; }
 }
+@keyframes g-arrive { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   #quartz-body { transition: none; }
 }
@@ -201,30 +233,21 @@ sup.g-ref {
 
 body[data-slug="index"] [data-action="pin"],
 body[data-slug="404"] [data-action="pin"] { display: none; }
-.g-toast {
-  position: fixed;
-  left: 50%;
-  bottom: calc(84px + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-  z-index: 40;
-  padding: 10px 18px;
-  border: 1px solid var(--garden-rule);
-  border-top-color: var(--garden-gilt);
-  border-radius: var(--garden-radius);
-  background: var(--garden-paper);
-  color: var(--garden-ink);
-  font-family: var(--garden-font-ui);
-  font-size: calc(0.95 * 17px);
-}
 
 // ---- outline: top-right button and a right-hand slide-out (always reachable while reading) ----
-.g-outline-toggle {
+.g-dock {
   position: fixed;
-  top: calc(10px + env(safe-area-inset-top));
-  right: calc(10px + env(safe-area-inset-right));
+  right: 12px;
+  // low, near the thumb's resting place, but clear of the home indicator
+  bottom: max(12px, calc(env(safe-area-inset-bottom) - 10px));
   z-index: 20;
-  width: 44px;
-  height: 44px;
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 10px;
+}
+.g-outline-toggle {
+  width: 48px;
+  height: 48px;
   display: grid;
   place-items: center;
   border: 1px solid var(--garden-rule);
@@ -270,5 +293,22 @@ body[data-slug="404"] [data-action="pin"] { display: none; }
   }
 }
 @media (prefers-reduced-motion: reduce) { .g-outline { transition: none; } }
+.g-home-toggle {
+  width: 48px; height: 48px;
+  display: grid; place-items: center;
+  border: 1px solid var(--garden-rule);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--garden-paper) 92%, transparent);
+  color: var(--garden-ink);
+  &:active { background: color-mix(in srgb, var(--garden-gilt) 30%, var(--garden-paper)); }
+}
+body[data-slug="index"] .g-home-toggle { display: none; }
+// a pinned note wears a small ribbon beside its title
+body[data-pinned] .article-title::after {
+  content: ""; display: inline-block; width: 0.38em; height: 0.8em; margin-left: 0.4em;
+  background: var(--garden-oxblood); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+  vertical-align: baseline;
+}
+.page .center { padding-top: 52px; }
 .page article h1[id], .page article h2[id], .page article h3[id], .page article h4[id] { scroll-margin-top: 16px; }
 .page article .article-title, .page .article-title { padding-right: 52px; }
