@@ -70,3 +70,18 @@ test("a finished sync gives the success double tick", async ({ page, request }) 
   await expect(b).toHaveText("Reload", { timeout: 15000 })
   await expect.poll(() => ticks(page)).toBeGreaterThanOrEqual(afterTap + 2)
 })
+
+test("a slow pull ticks about every sixth of the way, so it feels like a ratchet", async ({ page }) => {
+  await counting(page)
+  await page.goto("/Long-Note")
+  await page.evaluate(async () => {
+    const t = (y: number) => [{ identifier: 1, target: document.body, clientX: 200, clientY: y }]
+    const fire = (type: string, y: number) => { const e: any = new Event(type, { bubbles: true, cancelable: true }); e.touches = type === "touchend" ? [] : t(y); e.changedTouches = t(y); document.dispatchEvent(e) }
+    fire("touchstart", 200)
+    for (const dy of [12, 24, 36, 48, 60, 72, 84, 96]) fire("touchmove", 200 + dy)
+    fire("touchend", 296)
+  })
+  await expect(page.locator(".search-container")).toHaveClass(/active/)
+  // six ratchet ticks (one per sixth) plus the two-tick success on release
+  await expect.poll(() => ticks(page)).toBe(8)
+})

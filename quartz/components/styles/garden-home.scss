@@ -63,6 +63,6 @@
     font-family: var(--garden-font-ui);
     color: var(--garden-ink);
   }
-  button:active, a:active { background: color-mix(in srgb, var(--garden-gilt) 22%, transparent); }
+  button.g-press, a.g-press { background: color-mix(in srgb, var(--garden-gilt) 22%, transparent); }
 }
 .g-list-meta { font-variant-numeric: tabular-nums; color: var(--garden-ink-2); font-size: 0.85em; }

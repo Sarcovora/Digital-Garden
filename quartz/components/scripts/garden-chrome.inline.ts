@@ -202,6 +202,28 @@ document.addEventListener("nav", () => {
     haptic((el.dataset.haptic as Haptic) ?? "light")
   })
 
+  // ---- pressed look for rows: only after a short hold, never while the finger is scrolling ----
+  const PRESSABLE = ".g-list a, .g-list button, [data-garden-home] li a, .g-outline a, sup.g-ref"
+  let pressEl: Element | null = null
+  let pressTimer: ReturnType<typeof setTimeout> | undefined
+  let pressAt = { x: 0, y: 0 }
+  const clearPress = () => { if (pressTimer) clearTimeout(pressTimer); pressTimer = undefined; pressEl?.classList.remove("g-press"); pressEl = null }
+  window.addCleanup(clearPress)
+  on(document, "touchstart", (e: any) => {
+    clearPress()
+    const el = (e.target as Element | null)?.closest?.(PRESSABLE)
+    const t = e.changedTouches?.[0]
+    if (!el || !t) return
+    pressAt = { x: t.clientX, y: t.clientY }
+    pressTimer = setTimeout(() => { pressEl = el; el.classList.add("g-press") }, 110)
+  }, { passive: true })
+  on(document, "touchmove", (e: any) => {
+    const t = e.changedTouches?.[0]
+    if (t && Math.hypot(t.clientX - pressAt.x, t.clientY - pressAt.y) > 8) clearPress()
+  }, { passive: true })
+  on(document, "touchend", clearPress)
+  on(document, "touchcancel", clearPress)
+
   // ---- pull down from the top to search ----
   const pull = document.querySelector<HTMLElement>("[data-pull]")!
   const pullLabel = pull.querySelector<HTMLElement>("[data-pull-label]")!
@@ -209,7 +231,7 @@ document.addEventListener("nav", () => {
   const pullBlocked = (target: EventTarget | null) =>
     document.body.classList.contains("g-sheet-active") || !outline.hidden || searchOpen() ||
     !!(target as Element | null)?.closest?.("pre, table, .katex-display, [data-sheet], [data-outline], .search-container")
-  const endPull = () => { pull.hidden = true; pull.dataset.third = "0"; pull.style.removeProperty("--pull") }
+  const endPull = () => { pull.hidden = true; pull.dataset.step = "0"; pull.style.removeProperty("--pull") }
   window.addCleanup(endPull)
   let pulling: { startScrollY: number; startX: number; startY: number; x: number; y: number } | null = null
   on(document, "touchmove", (e: any) => {
@@ -218,10 +240,10 @@ document.addEventListener("nav", () => {
     pulling.x = t.clientX; pulling.y = t.clientY
     const p = pullProgress(pulling)
     if (p <= 0.05) return void endPull()
-    // a tick each time the pull passes another third, like a detent; the last one means "release now"
-    const third = Math.floor(p * 3 + 1e-9)
-    if (third > Number(pull.dataset.third || 0)) haptic("select")
-    pull.dataset.third = String(third)
+    // a tick each time the pull passes another sixth, like a ratchet; the last one means "release now"
+    const step = Math.floor(p * 6 + 1e-9)
+    if (step > Number(pull.dataset.step || 0)) haptic("select")
+    pull.dataset.step = String(step)
     pull.hidden = false
     pull.style.setProperty("--pull", String(p))
     pullLabel.textContent = p >= 1 ? "Release to search" : "Pull to search"

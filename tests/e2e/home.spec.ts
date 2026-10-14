@@ -61,3 +61,33 @@ test("explorer rows are at least 44pt tall", async ({ page }) => {
   await page.goto("/")
   for (const r of await page.locator("[data-explorer] li > *").all()) expect((await r.boundingBox())!.height).toBeGreaterThanOrEqual(44)
 })
+
+test("a list row only highlights after a deliberate hold: touching it to scroll never flashes it", async ({ page }) => {
+  await page.goto("/")
+  const row = page.locator("[data-recents] li a").first()
+  const touch = (type: string, y: number) =>
+    row.evaluate((el, a) => {
+      const t = [{ identifier: 1, target: el, clientX: 50, clientY: a.y }]
+      const e: any = new Event(a.type, { bubbles: true, cancelable: true })
+      e.touches = a.type === "touchend" ? [] : t; e.changedTouches = t
+      el.dispatchEvent(e)
+    }, { type, y })
+  const pressed = () => row.evaluate((el) => el.classList.contains("g-press"))
+  // a scroll: touch, then move
+  await touch("touchstart", 300); await touch("touchmove", 340)
+  await page.waitForTimeout(250)
+  expect(await pressed()).toBe(false)
+  await touch("touchend", 340)
+  // a hold: touch and stay
+  await touch("touchstart", 300)
+  expect(await pressed()).toBe(false) // not at once
+  await expect.poll(pressed).toBe(true)
+  await touch("touchend", 300)
+  expect(await pressed()).toBe(false)
+  // and the browser's own :active no longer paints rows
+  const box = (await row.boundingBox())!
+  await page.mouse.move(box.x + 20, box.y + 10); await page.mouse.down()
+  await page.waitForTimeout(250)
+  expect(await row.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgba(0, 0, 0, 0)")
+  await page.mouse.up()
+})
