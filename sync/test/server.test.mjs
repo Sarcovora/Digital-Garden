@@ -38,7 +38,7 @@ test("POST /api/sync with nothing new is a no-op", async () => {
 test("status shows behind count and POST pulls and rebuilds", async () => {
   const s = await boot()
   await s.r.pushCommit("two")
-  assert.equal((await (await s.call("/api/status")).json()).behind, 1)
+  assert.equal((await (await s.call("/api/status?fresh=1")).json()).behind, 1)
   const res = await s.call("/api/sync", { method: "POST" })
   assert.equal(res.status, 202)
   await s.app.idle()
@@ -67,7 +67,7 @@ test("POST without the X-Garden header is rejected", async () => {
 test("an unreachable remote sets checkError, stays idle, and keeps serving (Review Focus 2)", async () => {
   const s = await boot()
   await rm(s.r.remote, { recursive: true, force: true })
-  const st = await (await s.call("/api/status")).json()
+  const st = await (await s.call("/api/status?fresh=1")).json()
   assert.equal(st.state, "idle"); assert.match(st.checkError, /fetch/)
   assert.match(await currentHtml(s.dataDir), /one/)
   s.close()
@@ -142,4 +142,29 @@ test("force also rebuilds when GitHub is unreachable (it is a local rebuild)", a
   const res = await s.call("/api/sync?force=1", { method: "POST" })
   assert.equal(res.status, 202)
   await s.app.idle(); s.close()
+})
+
+test("plain GET /api/status answers at once from the last known state; ?fresh=1 waits for the GitHub check", async () => {
+  const r = await makeRepos()
+  const dataDir = await mkdtemp(path.join(tmpdir(), "data-"))
+  const script = await fakeBuildScript(r.root)
+  let delay = 0
+  const git = {
+    fetchStatus: async () => { await new Promise((res) => setTimeout(res, delay)); return { behind: 3, head: "abc" } },
+    pullFastForward: async () => ({ head: "abc" }),
+  }
+  const app = createApp({ vaultDir: r.vault, dataDir, buildCmd: { cmd: "node", args: [script] }, verify: async () => ({ ok: true, errors: [] }), fetchTtlMs: 0, git })
+  await new Promise((res) => app.server.listen(0, "127.0.0.1", res))
+  await app.ready
+  const base = `http://127.0.0.1:${app.server.address().port}`
+  delay = 800
+  const t0 = Date.now()
+  const quick = await (await fetch(base + "/api/status")).json()
+  assert.ok(Date.now() - t0 < 400, `plain status took ${Date.now() - t0}ms`)
+  assert.equal(typeof quick.state, "string")
+  const t1 = Date.now()
+  const fresh = await (await fetch(base + "/api/status?fresh=1")).json()
+  assert.ok(Date.now() - t1 >= 700)
+  assert.equal(fresh.behind, 3)
+  app.server.close()
 })

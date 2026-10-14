@@ -156,11 +156,17 @@ document.addEventListener("nav", () => {
     l.busy ? syncBtn.setAttribute("aria-busy", "true") : syncBtn.removeAttribute("aria-busy")
     syncNote.textContent = l.note
   }
-  const refreshSync = async () => {
+  const getStatus = async (fresh: boolean) => (await (await fetch(fresh ? "/api/status?fresh=1" : "/api/status", { cache: "no-store" })).json()) as SyncStatus & { buildId?: string | null }
+  // Show the last known state at once (the server answers from memory), then swap in the real GitHub check when it
+  // returns, so the panel never sits blank while git talks to the network.
+  const refreshSync = async (fresh = true) => {
     try {
-      const st = await (await fetch("/api/status", { cache: "no-store" })).json()
-      renderSync(st)
-      return st as SyncStatus
+      const quick = await getStatus(false)
+      renderSync(quick)
+      if (fresh && quick.state !== "building") {
+        getStatus(true).then(renderSync).catch(() => {})
+      }
+      return quick as SyncStatus
     } catch {
       syncBtn.textContent = "Check again"; syncBtn.disabled = false
       syncNote.textContent = "Can't reach the garden to check for updates."
@@ -168,7 +174,7 @@ document.addEventListener("nav", () => {
     }
   }
   const poll = async (deadline: number) => {
-    const st = await refreshSync()
+    const st = await refreshSync(false)
     if (st && st.state !== "building") return
     if (Date.now() > deadline) return
     pollTimer = setTimeout(() => poll(deadline), 2000)
@@ -203,7 +209,8 @@ document.addEventListener("nav", () => {
   })
 
   // ---- pressed look for rows: only after a short hold, never while the finger is scrolling ----
-  const PRESSABLE = ".g-list a, .g-list button, [data-garden-home] li a, .g-outline a, sup.g-ref"
+  // (not the home lists: rows you scroll through, like pinned and recent, never highlight at all)
+  const PRESSABLE = ".g-sheet-body .g-list a, .g-sheet-body .g-list button, .g-outline a, sup.g-ref"
   let pressEl: Element | null = null
   let pressTimer: ReturnType<typeof setTimeout> | undefined
   let pressAt = { x: 0, y: 0 }

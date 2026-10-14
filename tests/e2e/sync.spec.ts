@@ -62,3 +62,25 @@ test("a GitHub error can be dismissed with the close button and with the menu", 
   await page.locator("[data-toggle]").click() // closing the menu closes the panel too
   await expect(panel).toBeHidden()
 })
+
+test("opening the sync panel never shows a blank box while the GitHub check is slow", async ({ page, request }) => {
+  await request.post("/__stub", { data: { behind: 0, state: "idle", error: null, checkError: null, freshDelay: 2000 } })
+  await page.goto("/Alpha-Note")
+  await page.locator("[data-toggle]").click()
+  await page.locator('[data-action="sync"]').click()
+  const note = page.locator("[data-sync-note]"), button = page.locator("[data-sync-button]")
+  // within a moment both have words in them, long before the slow check returns
+  await expect(note).not.toHaveText("", { timeout: 600 })
+  await expect(button).not.toHaveText("", { timeout: 600 })
+  await request.post("/__stub", { data: { freshDelay: 0 } })
+})
+
+test("the panel shows the last known state at once, then updates when the real GitHub check comes back", async ({ page, request }) => {
+  await request.post("/__stub", { data: { behind: 0, freshBehind: 3, freshDelay: 800, state: "idle", error: null, checkError: null } })
+  await page.goto("/Alpha-Note")
+  await page.locator("[data-toggle]").click()
+  await page.locator('[data-action="sync"]').click()
+  await expect(page.locator("[data-sync-button]")).toHaveText("Up to date", { timeout: 600 })
+  await expect(page.locator("[data-sync-button]")).toHaveText("Sync · 3 new commits", { timeout: 5000 })
+  await request.post("/__stub", { data: { freshBehind: null, freshDelay: 0 } })
+})

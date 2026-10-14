@@ -96,7 +96,7 @@ The sync container is not published to the host. The web container's nginx proxi
 
 | Endpoint | What it does |
 | --- | --- |
-| `GET /api/status` | `{ state, behind, lastSyncedAt, commit, buildId, error, checkError }` |
+| `GET /api/status` | `{ state, behind, lastSyncedAt, commit, buildId, error, checkError }`, answered at once from the last known state (it refreshes quietly behind). Add `?fresh=1` to wait for a real GitHub check. |
 | `POST /api/sync` | Fetch, fast-forward, rebuild if there is something new. Requires the header `X-Garden: 1`. Returns 202 when a build started, 200 when already up to date, 409 when one is running, 502 when GitHub cannot be reached. |
 | `POST /api/sync?force=1` | Rebuild even if nothing changed (after a theme or code change). |
 

@@ -18,7 +18,11 @@ export function createApp({ vaultDir, dataDir, buildCmd, verify, fetchTtlMs = 60
     res.end(JSON.stringify(body))
   }
 
-  async function refreshBehind(force = false) {
+  let inflight = null // one GitHub check at a time, however many requests ask
+  function refreshBehind(force = false) {
+    return (inflight ??= doRefresh(force).finally(() => { inflight = null }))
+  }
+  async function doRefresh(force) {
     const store = await storePromise
     if (!force && Date.now() - lastFetchAt < fetchTtlMs) return store.get()
     try {
@@ -69,7 +73,12 @@ export function createApp({ vaultDir, dataDir, buildCmd, verify, fetchTtlMs = 60
     try {
       const url = new URL(req.url, "http://x")
       if (req.method === "GET" && url.pathname === "/api/status") {
-        return send(res, 200, job ? (await storePromise).get() : await refreshBehind())
+        const store = await storePromise
+        // ?fresh=1 waits for a real GitHub check. Plain GET answers at once from the last known state and
+        // refreshes quietly behind it, so opening the sync panel never waits on the network.
+        if (!job && url.searchParams.get("fresh") === "1") return send(res, 200, await refreshBehind(true))
+        if (!job) refreshBehind().catch(() => {})
+        return send(res, 200, store.get())
       }
       if (req.method === "POST" && url.pathname === "/api/sync") {
         if (req.headers["x-garden"] !== "1") return send(res, 403, { error: "missing X-Garden header" })

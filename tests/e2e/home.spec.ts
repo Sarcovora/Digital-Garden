@@ -62,7 +62,7 @@ test("explorer rows are at least 44pt tall", async ({ page }) => {
   for (const r of await page.locator("[data-explorer] li > *").all()) expect((await r.boundingBox())!.height).toBeGreaterThanOrEqual(44)
 })
 
-test("a list row only highlights after a deliberate hold: touching it to scroll never flashes it", async ({ page }) => {
+test("home list rows (pinned, recent, explorer) never highlight: not on touch, not on hold, not on mouse press", async ({ page }) => {
   await page.goto("/")
   const row = page.locator("[data-recents] li a").first()
   const touch = (type: string, y: number) =>
@@ -72,22 +72,21 @@ test("a list row only highlights after a deliberate hold: touching it to scroll 
       e.touches = a.type === "touchend" ? [] : t; e.changedTouches = t
       el.dispatchEvent(e)
     }, { type, y })
-  const pressed = () => row.evaluate((el) => el.classList.contains("g-press"))
-  // a scroll: touch, then move
-  await touch("touchstart", 300); await touch("touchmove", 340)
-  await page.waitForTimeout(250)
-  expect(await pressed()).toBe(false)
-  await touch("touchend", 340)
-  // a hold: touch and stay
+  const bg = () => row.evaluate((el) => getComputedStyle(el).backgroundColor)
   await touch("touchstart", 300)
-  expect(await pressed()).toBe(false) // not at once
-  await expect.poll(pressed).toBe(true)
+  await page.waitForTimeout(300) // a deliberate hold
+  expect(await row.evaluate((el) => el.classList.contains("g-press"))).toBe(false)
+  expect(await bg()).toBe("rgba(0, 0, 0, 0)")
   await touch("touchend", 300)
-  expect(await pressed()).toBe(false)
-  // and the browser's own :active no longer paints rows
   const box = (await row.boundingBox())!
   await page.mouse.move(box.x + 20, box.y + 10); await page.mouse.down()
   await page.waitForTimeout(250)
-  expect(await row.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgba(0, 0, 0, 0)")
-  await page.mouse.up()
+  expect(await bg()).toBe("rgba(0, 0, 0, 0)")
+  await page.mouse.up() // that click opens the note
+  await expect(page).toHaveURL(/Home-Map/)
+  await page.goto("/")
+  const folder = page.locator("[data-explorer] li button").first()
+  await folder.evaluate((el) => { const e: any = new Event("touchstart", { bubbles: true }); e.touches = e.changedTouches = [{ identifier: 1, target: el, clientX: 50, clientY: 400 }]; el.dispatchEvent(e) })
+  await page.waitForTimeout(300)
+  expect(await folder.evaluate((el) => el.classList.contains("g-press"))).toBe(false)
 })

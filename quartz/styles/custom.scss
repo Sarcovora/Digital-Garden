@@ -186,15 +186,14 @@ html, body, a, button, summary, label, input, article p, article li { touch-acti
 
 // Instant touch feedback: iOS's default grey flash is replaced by a pressed state we control, with no transition.
 html { -webkit-tap-highlight-color: transparent; }
-// Rows in scrolling lists (and numerals in the text) use .g-press instead of :active: it only appears after a
+// Rows in the sheet and outline (and numerals in the text) use .g-press instead of :active: it only appears after a
 // short hold, so touching a row to scroll never flashes it.
 .g-actions button:active,
 .g-size button:active,
 .g-sync-panel button:active,
-.g-list a.g-press,
-.g-list button.g-press,
-.g-outline a.g-press,
-[data-garden-home] li a.g-press { background: color-mix(in srgb, var(--garden-gilt) 22%, transparent); transition: none; }
+.g-sheet-body .g-list a.g-press,
+.g-sheet-body .g-list button.g-press,
+.g-outline a.g-press { background: color-mix(in srgb, var(--garden-gilt) 22%, transparent); transition: none; }
 .g-toggle:active, .g-outline-toggle:active { background: color-mix(in srgb, var(--garden-gilt) 30%, var(--garden-paper)); transition: none; }
 sup.g-ref.g-press { background: color-mix(in srgb, var(--garden-oxblood) 18%, transparent); }
 

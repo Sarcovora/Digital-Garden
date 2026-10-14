@@ -33,7 +33,12 @@ const server = http.createServer(async (req, res) => {
     if (req.headers.range) { res.writeHead(206, { "content-type": "text/plain", "content-range": "bytes 0-1/6", "content-length": 2 }); return res.end("ab") }
     res.writeHead(200, { "content-type": "text/plain" }); return res.end("abcdef")
   }
-  if (url.pathname === "/api/status") return json(200, stub)
+  if (url.pathname === "/api/status") {
+    // like the real service: a plain GET answers at once; ?fresh=1 waits for the (slow) GitHub check
+    const fresh = url.searchParams.get("fresh") === "1"
+    if (fresh && stub.freshDelay) await new Promise((r) => setTimeout(r, stub.freshDelay))
+    return json(200, fresh && stub.freshBehind !== undefined ? { ...stub, behind: stub.freshBehind } : stub)
+  }
   if (url.pathname === "/api/sync" && req.method === "POST") {
     stub = { ...stub, state: "building" }
     setTimeout(() => { stub = { ...stub, state: "idle", behind: 0, error: null, lastSyncedAt: new Date().toISOString(), buildId: "e2e-build-2" } }, 1000)
