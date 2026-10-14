@@ -18,7 +18,7 @@
     "format": "npx prettier . --write",
     "test": "tsx --test",
     "profile": "0x -D prof ./quartz/bootstrap-cli.mjs build --concurrency=1",
-    "test:build": "node --test tests/build/*.build.mjs",
+    "test:build": "node --test --test-concurrency=1 tests/build/*.build.mjs",
     "test:e2e": "playwright test",
     "postinstall": "node scripts/copy-assets.mjs",
     "icons": "node scripts/make-icons.mjs",
