@@ -180,3 +180,6 @@ input, textarea { caret-color: var(--garden-oxblood); accent-color: var(--garden
   a strong, a em, a b, a i, h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, .callout-title strong, .callout-title em { color: inherit; }
   strong em, em strong { color: var(--garden-bold); }
 }
+
+// No double-tap-to-zoom (it delays taps and fires by accident on dense text); pinch zoom still works.
+html, body, a, button, summary, label, input, article p, article li { touch-action: manipulation; }

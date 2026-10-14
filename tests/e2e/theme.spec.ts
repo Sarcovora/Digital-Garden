@@ -80,3 +80,10 @@ test("highlight, bold and italic each render in their own colour, in both themes
     await ctx.close()
   }
 })
+
+test("double-tap zoom is off (touch-action: manipulation) on the page, links and buttons; pinch is left alone", async ({ page }) => {
+  await page.goto("/Alpha-Note")
+  const ta = (sel: string) => page.locator(sel).first().evaluate((el) => getComputedStyle(el).touchAction)
+  for (const sel of ["html", "body", "article p", "article a", "[data-toggle]"]) expect(await ta(sel), sel).toBe("manipulation")
+  expect(await page.locator('meta[name="viewport"]').getAttribute("content")).not.toMatch(/user-scalable=no|maximum-scale/)
+})
