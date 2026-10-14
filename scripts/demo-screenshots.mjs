@@ -1,4 +1,4 @@
-// Builds examples/demo-vault, serves it, and captures the README images (iPhone 14, WebKit).
+// Builds examples/demo-vault, serves it, and captures the README images (iPhone 16 Pro, 402x874, WebKit).
 // Only the demo vault is ever rendered here: no real notes. Usage: node scripts/demo-screenshots.mjs
 import http from "node:http"
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises"
@@ -40,7 +40,7 @@ const SEED = {
 const browser = await webkit.launch()
 const shots = {}
 for (const scheme of ["light", "dark"]) {
-  const ctx = await browser.newContext({ ...devices["iPhone 14"], colorScheme: scheme, reducedMotion: "reduce", serviceWorkers: "block" })
+  const ctx = await browser.newContext({ ...devices["iPhone 16 Pro"], viewport: { width: 402, height: 874 }, screen: { width: 402, height: 874 }, colorScheme: scheme, reducedMotion: "reduce", serviceWorkers: "block" })
   const page = await ctx.newPage()
   await page.addInitScript((seed) => { for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, JSON.stringify(v)) }, SEED)
   const go = async (p) => { await page.goto(base + p); await page.waitForLoadState("networkidle"); await page.waitForTimeout(250) }
@@ -48,25 +48,42 @@ for (const scheme of ["light", "dark"]) {
   await go("/"); await shot("home")
   await go("/02---Areas/Reading/Note-taking"); await shot("note")
   await page.locator("article sup.g-ref").first().click(); await page.waitForTimeout(500); await shot("sheet")
-  await go("/03---Resources-and-Collections/Attention-Is-Linear-Algebra"); await shot("math")
+  await go("/03---Resources-and-Collections/Attention-Is-Linear-Algebra")
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight * 0.38, behavior: "instant" })); await page.waitForTimeout(400)
+  await shot("math")
   await page.locator("[data-outline-toggle]").click(); await page.waitForTimeout(400); await shot("outline")
   await go("/02---Areas/Reading/Note-taking"); await page.locator("[data-toggle]").click(); await shot("menu")
   await ctx.close()
 }
 
-// The hero: three phones side by side on a quiet page.
-const phone = (file, scheme) => `<figure class="${scheme}"><img src="file://${file}"></figure>`
-const html = `<!doctype html><meta charset="utf-8"><style>
-  body{margin:0;width:1800px;height:900px;display:flex;align-items:center;justify-content:center;gap:56px;background:linear-gradient(180deg,#eceee8,#dfe2da);font-family:system-ui}
-  figure{margin:0;width:330px;border-radius:46px;padding:10px;background:#101112;box-shadow:0 30px 60px -20px rgba(0,0,0,.45),0 0 0 2px #2b2d2e inset}
-  figure img{display:block;width:100%;border-radius:36px}
-  figure:nth-child(2){transform:translateY(-26px) scale(1.06)}
-</style>${phone(shots["home-light"], "light")}${phone(shots["sheet-light"], "light")}${phone(shots["note-dark"], "dark")}`
-await writeFile("tests/.out/hero.html", html)
-const hero = await browser.newPage({ viewport: { width: 1800, height: 900 }, deviceScaleFactor: 1 })
-await hero.goto("file://" + path.resolve("tests/.out/hero.html"))
-await hero.waitForTimeout(500)
-await hero.screenshot({ path: `${images}/hero.png` })
+// The hero and the social preview: phones side by side on a quiet page (iPhone 16 Pro aspect, 402 x 874).
+const phone = (file) => `<figure><img src="file://${file}"></figure>`
+const css = `
+  *{box-sizing:border-box}
+  body{margin:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#eceee8,#dfe2da);font-family:"Literata Variable",Georgia,serif;color:#16181a}
+  figure{margin:0;width:var(--w);border-radius:calc(var(--w)*.15);padding:calc(var(--w)*.03);background:#101112;box-shadow:0 30px 60px -20px rgba(0,0,0,.45),0 0 0 2px #2b2d2e inset;flex:none}
+  figure img{display:block;width:100%;border-radius:calc(var(--w)*.12)}
+  figure.mid{transform:translateY(-3%) scale(1.05)}
+`
+const heroHtml = `<!doctype html><meta charset="utf-8"><style>${css} body{width:1800px;height:900px;gap:64px;--w:320px} figure{--w:320px}</style>${phone(shots["home-light"])}<figure class="mid">${`<img src="file://${shots["sheet-light"]}">`}</figure>${phone(shots["note-dark"])}`
+const socialHtml = `<!doctype html><meta charset="utf-8"><style>${css}
+  body{width:1280px;height:640px;justify-content:space-between;padding:0 70px 0 80px;overflow:hidden}
+  .copy{max-width:540px}
+  h1{font-size:76px;line-height:1.02;margin:0 0 20px;font-variant:small-caps;letter-spacing:.01em}
+  p{font-size:27px;line-height:1.35;margin:0;color:#4a4f52}
+  .row{display:flex;gap:26px;align-items:flex-start;margin-top:150px;--w:250px}
+  figure{--w:250px}
+</style><div class="copy"><h1>Digital Garden</h1><p>A calm, phone-first reading room for your Obsidian vault.</p></div>
+<div class="row">${phone(shots["home-light"])}${phone(shots["sheet-light"])}</div>`
+await writeFile("tests/.out/hero.html", heroHtml)
+await writeFile("tests/.out/social.html", socialHtml)
+const shotPage = async (htmlFile, w, h, outFile) => {
+  const pg = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 })
+  await pg.goto("file://" + path.resolve(htmlFile)); await pg.waitForTimeout(500)
+  await pg.screenshot({ path: outFile }); await pg.close()
+}
+await shotPage("tests/.out/hero.html", 1800, 900, `${images}/hero.png`)
+await shotPage("tests/.out/social.html", 1280, 640, `${images}/social-preview.png`)
 await browser.close()
 server.close()
 console.log("screenshots written to docs/images")

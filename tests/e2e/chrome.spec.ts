@@ -3,6 +3,18 @@ import { test, expect } from "@playwright/test"
 const openMenu = async (page) => {
   await page.locator("[data-garden-chrome] [data-toggle]").click()
 }
+// A one-finger drag, dispatched as touch events (the app listens on document).
+const drag = (page, from: { x: number; y: number }, to: { x: number; y: number }) =>
+  page.evaluate(({ from, to }) => {
+    const touch = (p: { x: number; y: number }) => [{ identifier: 1, target: document.body, clientX: p.x, clientY: p.y }]
+    const fire = (type: string, p: { x: number; y: number }) => {
+      const e: any = new Event(type, { bubbles: true, cancelable: true })
+      e.touches = type === "touchend" ? [] : touch(p)
+      e.changedTouches = touch(p)
+      document.dispatchEvent(e)
+    }
+    fire("touchstart", from); fire("touchmove", { x: from.x, y: (from.y + to.y) / 2 }); fire("touchmove", to); fire("touchend", to)
+  }, { from, to })
 
 test("reading page has no persistent chrome except the floating control", async ({ page }) => {
   await page.goto("/Alpha-Note")
@@ -10,10 +22,10 @@ test("reading page has no persistent chrome except the floating control", async 
   await expect(page.locator(".search-button")).toBeHidden()
   await expect(page.locator("footer")).toHaveCount(0)
 })
-test("floating control expands to search, backlinks, sync, theme, back", async ({ page }) => {
+test("floating control expands to backlinks, sync, theme, back (no Search row: search is a pull-down)", async ({ page }) => {
   await page.goto("/Alpha-Note")
   await openMenu(page)
-  for (const a of ["search", "backlinks", "sync", "theme", "back"])
+  for (const a of ["backlinks", "sync", "theme", "back"])
     await expect(page.locator(`[data-garden-chrome] [data-action="${a}"]`)).toBeVisible()
   await expect(page.locator("[data-toggle]")).toHaveAttribute("aria-expanded", "true")
 })
@@ -55,12 +67,34 @@ test("every control target is at least 44pt", async ({ page }) => {
     expect(box!.width).toBeGreaterThanOrEqual(44)
   }
 })
-test("search action opens the Quartz search overlay with the input focused", async ({ page }) => {
-  await page.goto("/Alpha-Note")
-  await openMenu(page)
-  await page.locator('[data-action="search"]').click()
+test("pulling down hard from the top opens search with the input focused; a short pull, or one that starts mid-page, does not", async ({ page }) => {
+  await page.goto("/Long-Note")
+  await drag(page, { x: 200, y: 200 }, { x: 200, y: 240 })
+  await expect(page.locator(".search-container")).not.toHaveClass(/active/)
+  await page.evaluate(() => window.scrollTo({ top: 500, behavior: "instant" }))
+  await drag(page, { x: 200, y: 200 }, { x: 200, y: 400 })
+  await expect(page.locator(".search-container")).not.toHaveClass(/active/)
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }))
+  await drag(page, { x: 200, y: 200 }, { x: 200, y: 330 })
   await expect(page.locator(".search-container")).toHaveClass(/active/)
   await expect(page.locator(".search-bar")).toBeFocused()
+})
+test("the same pull works on the home screen, and nothing floats there", async ({ page }) => {
+  await page.goto("/")
+  await expect(page.locator(".search-button")).toBeHidden()
+  await drag(page, { x: 200, y: 200 }, { x: 200, y: 340 })
+  await expect(page.locator(".search-container")).toHaveClass(/active/)
+})
+test("a pull hint appears while pulling and is gone when it ends", async ({ page }) => {
+  await page.goto("/Long-Note")
+  await page.evaluate(() => {
+    const t = (y: number) => [{ identifier: 1, target: document.body, clientX: 200, clientY: y }]
+    const fire = (type: string, y: number) => { const e: any = new Event(type, { bubbles: true }); e.touches = type === "touchend" ? [] : t(y); e.changedTouches = t(y); document.dispatchEvent(e) }
+    fire("touchstart", 200); fire("touchmove", 260)
+  })
+  await expect(page.locator("[data-pull]")).toBeVisible()
+  await page.evaluate(() => { const e: any = new Event("touchend", { bubbles: true }); e.touches = []; e.changedTouches = [{ identifier: 1, target: document.body, clientX: 200, clientY: 260 }]; document.dispatchEvent(e) })
+  await expect(page.locator("[data-pull]")).toBeHidden()
 })
 test("theme action cycles system, light, dark and persists the choice", async ({ browser }) => {
   const ctx = await browser.newContext({ colorScheme: "light" })
@@ -279,7 +313,7 @@ test("text size steps up and down, persists across pages, and spans 25% to 200%"
 test("buttons show a pressed state the instant a finger lands, before the tap completes", async ({ page }) => {
   await page.goto("/Alpha-Note")
   await openMenu(page)
-  const btn = page.locator('[data-action="search"]')
+  const btn = page.locator('[data-action="backlinks"]')
   const bg = () => btn.evaluate((el) => getComputedStyle(el).backgroundColor)
   const before = await bg()
   const b = await btn.boundingBox()
@@ -293,10 +327,36 @@ test("buttons show a pressed state the instant a finger lands, before the tap co
 
 test("the search field is at least 16px so iOS does not zoom the page on focus, at any text size", async ({ page }) => {
   await page.goto("/Alpha-Note")
-  await openMenu(page)
-  await page.locator('[data-action="search"]').click()
+  await drag(page, { x: 200, y: 200 }, { x: 200, y: 340 })
+  await expect(page.locator(".search-container")).toHaveClass(/active/)
   const size = () => page.locator(".search-bar").evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
   expect(await size()).toBeGreaterThanOrEqual(16)
   await page.evaluate(() => (window as any).gardenSetScale(0.25))
   expect(await size()).toBeGreaterThanOrEqual(16)
+})
+
+test("the outline panel has a Close button, drags right to dismiss like the sheet, and is slightly translucent", async ({ page }) => {
+  await page.goto("/Long-Note")
+  const panel = page.locator("[data-outline]")
+  await page.locator("[data-outline-toggle]").click()
+  await expect(panel).toBeVisible()
+  const alpha = await panel.evaluate((el) => { const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g)!; return m.length > 3 ? Number(m[3]) : 1 })
+  expect(alpha).toBeLessThan(1); expect(alpha).toBeGreaterThan(0.8)
+  // Close
+  const close = page.getByRole("button", { name: "Close" })
+  expect((await close.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  await close.click()
+  await expect(panel).toBeHidden()
+  // drag the header right: follows the finger, snaps back when short, dismisses when far
+  await page.locator("[data-outline-toggle]").click()
+  const head = (await page.locator("[data-outline-head]").boundingBox())!
+  const x = head.x + 20, y = head.y + 10
+  const fire = (type: string, cx: number) => page.evaluate(({ type, cx, y }) => document.querySelector("[data-outline-head]")!.dispatchEvent(new PointerEvent(type, { clientX: cx, clientY: y, pointerId: 9, bubbles: true })), { type, cx, y })
+  await fire("pointerdown", x); await fire("pointermove", x + 40)
+  expect(await panel.evaluate((el) => (el as HTMLElement).style.transform)).toContain("40px")
+  await fire("pointerup", x + 40)
+  await expect(panel).toBeVisible()
+  expect(await panel.evaluate((el) => (el as HTMLElement).style.transform)).toBe("")
+  await fire("pointerdown", x); await fire("pointermove", x + 150); await fire("pointerup", x + 150)
+  await expect(panel).toBeHidden()
 })

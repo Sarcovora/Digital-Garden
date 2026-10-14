@@ -1,19 +1,13 @@
 import { test, expect } from "@playwright/test"
 
-test("first run: search line, fallback recents, no ribbon, no thumb tabs", async ({ page }) => {
+test("first run: fallback recents, no ribbon, no thumb tabs", async ({ page }) => {
   await page.goto("/")
-  await expect(page.locator(".search-button")).toBeVisible()
+  await expect(page.locator(".search-button")).toBeHidden() // no floating search bar; pull down to search
   await expect(page.locator("[data-recents] li").first()).toBeVisible()
   await expect(page.locator("[data-recents-title]")).toHaveText("Recently updated")
   await expect(page.locator("[data-resume]")).toBeHidden()
   await expect(page.locator("[data-pinned-hint]")).toBeVisible()
   await expect(page.locator(".g-thumb, .g-thumbs")).toHaveCount(0)
-})
-test("search sits at the bottom of the screen within thumb reach", async ({ page }) => {
-  await page.goto("/")
-  const box = await page.locator(".search-button").boundingBox()
-  const vh = page.viewportSize()!.height
-  expect(box!.y).toBeGreaterThan(vh * 0.8)
 })
 test("a stored resume point for an existing note shows the ribbon with the percentage", async ({ page }) => {
   await page.goto("/")

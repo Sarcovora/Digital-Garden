@@ -5,20 +5,20 @@ import { QuartzComponent, QuartzComponentConstructor } from "./types"
 
 const GardenChrome: QuartzComponent = () => (
   <>
+  <div class="g-pull" data-pull role="presentation" hidden><span data-pull-label>Pull to search</span></div>
   <div class="g-statusband" data-statusband aria-hidden="true"></div>
   <div class="garden-chrome" data-garden-chrome>
     <div class="g-progress" aria-hidden="true"></div>
     <div class="g-actions" hidden>
       <button type="button" data-action="back">Back</button>
-      <button type="button" data-action="search">Search</button>
       <button type="button" data-action="backlinks">Backlinks</button>
-      <button type="button" data-action="pin">Pin note</button>
+      <button type="button" data-action="pin" data-haptic="success">Pin note</button>
       <button type="button" data-action="sync">Sync</button>
-      <button type="button" data-action="theme">Theme</button>
+      <button type="button" data-action="theme" data-haptic="select">Theme</button>
       <div class="g-size" role="group" aria-label="Text size">
-        <button type="button" data-action="smaller" aria-label="Smaller text">A−</button>
+        <button type="button" data-action="smaller" data-haptic="select" aria-label="Smaller text">A−</button>
         <span data-size-label aria-live="polite"></span>
-        <button type="button" data-action="larger" aria-label="Larger text">A+</button>
+        <button type="button" data-action="larger" data-haptic="select" aria-label="Larger text">A+</button>
       </div>
     </div>
     <div class="g-sync-panel" data-sync-panel hidden>
@@ -40,6 +40,10 @@ const GardenChrome: QuartzComponent = () => (
   </div>
   <div class="g-outline-scrim" data-outline-scrim hidden></div>
   <nav class="g-outline" data-outline aria-label="Outline of this page" hidden>
+    <div class="g-outline-head" data-outline-head>
+      <span class="g-outline-title">Outline</span>
+      <button type="button" class="g-outline-close" data-outline-close>Close</button>
+    </div>
     <ul data-outline-list></ul>
   </nav>
   <div class="g-scrim" data-sheet-scrim hidden></div>

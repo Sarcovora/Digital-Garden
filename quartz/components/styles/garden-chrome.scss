@@ -11,11 +11,25 @@
   .g-actions { order: 1; }
   .g-sync-panel { order: 2; }
 }
-// On the home screen the search line owns the bottom edge, so the control sits above it.
-body[data-slug="index"] .garden-chrome [data-action="search"] { display: none; }
-// On note pages search is summoned from the control, never shown as a persistent field.
-body:not([data-slug="index"]) .search > .search-button {
-  display: none;
+// Search is a pull-down from the top, never a persistent field. Its button stays in the DOM so the pull can open it.
+.search > .search-button { display: none; }
+.g-pull {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top) + 8px);
+  z-index: 39;
+  transform: translate(-50%, calc((var(--pull, 0) - 1) * 56px));
+  opacity: var(--pull, 0);
+  padding: 9px 18px;
+  border: 1px solid var(--garden-rule);
+  border-top-color: var(--garden-gilt);
+  border-radius: 999px;
+  background: var(--garden-paper);
+  color: var(--garden-ink-2);
+  font-family: var(--garden-font-ui);
+  font-size: calc(0.9 * 17px);
+  pointer-events: none;
+  &[hidden] { display: none; }
 }
 .g-toggle {
   width: 52px;
@@ -209,7 +223,8 @@ sup.g-ref {
 @media (prefers-reduced-motion: reduce) {
   .g-sheet { transition: none; }
 }
-.g-sheet-active .garden-chrome {
+.g-sheet-active .garden-chrome,
+.g-sheet-active .g-dock {
   opacity: 0;
   pointer-events: none;
 }
@@ -276,7 +291,9 @@ body[data-slug="404"] [data-action="pin"] { display: none; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: calc(64px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
-  background: var(--garden-paper);
+  background: var(--garden-onionskin);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-left: 1px solid var(--garden-gilt);
   box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
   font-family: var(--garden-font-ui);
@@ -291,6 +308,23 @@ body[data-slug="404"] [data-action="pin"] { display: none; }
     color: var(--garden-ink); text-decoration: none;
     font-size: calc(0.95 * 17px);
   }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .g-outline { background: var(--garden-paper); }
+}
+.g-outline-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: -52px; // the header sits where the panel's top padding is, under the clock
+  padding-bottom: 6px;
+  touch-action: none; // the header is the drag handle
+  cursor: grab;
+}
+.g-outline-title { font-size: calc(0.95 * 17px); color: var(--garden-ink-2); }
+.g-outline-close {
+  flex: none; min-width: 44px; min-height: 44px; margin-right: -8px; padding: 0 8px;
+  border: 0; background: transparent; color: var(--garden-ink-2);
+  font-family: var(--garden-font-ui); font-size: calc(0.95 * 17px); cursor: pointer;
+  &:active { background: color-mix(in srgb, var(--garden-gilt) 22%, transparent); }
 }
 @media (prefers-reduced-motion: reduce) { .g-outline { transition: none; } }
 .g-home-toggle {

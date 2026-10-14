@@ -26,8 +26,9 @@ It is deliberately **not** a docs site, not an Obsidian clone, and not a publish
 - **Links are verse numerals.** Every wikilink gets a small superscript number. Tap it and an onionskin sheet rises over the page showing the linked passage, without leaving where you are. Long-press a link for the same.
 - **Obsidian fidelity.** Wikilinks, page and block embeds, callouts, LaTeX, mermaid, tasks, `==highlights==`, footnotes, and single line breaks that stay line breaks, as in Obsidian. Highlight, bold and italic each get their own colour so things are easy to find.
 - **Excalidraw drawings, pre-rendered.** Drawings become cached SVGs at build time, so they are ready before you open the note. They invert cleanly in dark mode.
-- **Search first.** The home screen opens on a search line anchored at the bottom, within thumb reach. Above it: a ribbon that resumes where you stopped, pinned notes, recent notes, and a file explorer.
-- **Chrome only when summoned.** While reading there is almost nothing on screen: a Home button, an outline button, and a menu button. The outline slides in from the right and jumps to any heading. Swipe from the left edge to go back through the notes you visited.
+- **Pull down to search.** Pull down hard from the top of any page, like pull-to-refresh, and search slides in. The home screen has no floating bar to get in the way: a ribbon resumes where you stopped, then pinned notes, recent notes, and a file explorer that drills into your folders in place.
+- **Full-screen, one-handed.** Installed from Safari it fills the whole screen, under the clock, like a native app. While reading there is almost nothing on it: a thin progress bar across the top, a menu button at the top right, and **Home** and **Outline** within thumb reach at the bottom right. The outline slides in from the right and jumps to any heading. Swipe from the left edge to go back through the notes you visited.
+- **Feels physical.** Taps, text-size steps, pins and a finished sync give small haptic ticks on iPhone (iOS 18+) and Android; set `localStorage["garden:haptics"] = "off"` to silence them. Every control shows its pressed state the instant a finger lands.
 - **Works offline.** A service worker caches the shell and the notes you open, stamped per build.
 - **Syncs itself.** A tiny sync service pulls your vault's git repository daily and on demand from a button in the app, rebuilds, and swaps the new site in atomically. The button greys out when there is nothing new.
 - **Private by construction.** Read-only deploy key, loopback-bound web container, meant to sit behind [Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve) or another private proxy. Nothing is exposed publicly.
@@ -36,7 +37,7 @@ It is deliberately **not** a docs site, not an Obsidian clone, and not a publish
   <tr>
     <td align="center"><img src="docs/images/home-light.png" width="230" alt="Home, light"><br><sub>Home</sub></td>
     <td align="center"><img src="docs/images/sheet-light.png" width="230" alt="Reference sheet, light"><br><sub>Reference sheet</sub></td>
-    <td align="center"><img src="docs/images/math-light.png" width="230" alt="Math note, light"><br><sub>Math and code</sub></td>
+    <td align="center"><img src="docs/images/math-light.png" width="230" alt="Math note, light"><br><sub>Math and code, with the progress bar</sub></td>
     <td align="center"><img src="docs/images/outline-light.png" width="230" alt="Outline, light"><br><sub>Outline</sub></td>
   </tr>
   <tr>
@@ -47,7 +48,7 @@ It is deliberately **not** a docs site, not an Obsidian clone, and not a publish
   </tr>
 </table>
 
-<sub>All screenshots are of the sample vault in [`examples/demo-vault`](examples/demo-vault), captured in iPhone 14 WebKit by `npm run screenshots`.</sub>
+<sub>All screenshots are of the sample vault in [`examples/demo-vault`](examples/demo-vault), captured at iPhone 16 Pro size (402 x 874) in WebKit by `npm run screenshots`.</sub>
 
 ## Try it in two minutes
 
@@ -136,7 +137,7 @@ npm ci
 npx tsc --noEmit        # types
 npm test                # 150+ unit tests (state, sync service, build helpers)
 npm run test:build      # Quartz builds of a fixture vault, checked for fidelity
-npm run test:e2e        # iPhone 14 WebKit tests against a built fixture site
+npm run test:e2e        # iPhone WebKit tests against a built fixture site
 npm run screenshots     # rebuild docs/images from examples/demo-vault
 ```
 
@@ -148,6 +149,7 @@ The tests run against a small synthetic vault in [`tests/fixture-vault`](tests/f
 - **Read-only, always.** There is no editing and no write path to your vault.
 - **One reader.** There are no accounts. Pins and recents live on each device.
 - **Sync needs a git remote.** The vault is expected to be a git repository the server can pull from.
+- **Status bar.** To draw under the clock, the app uses iOS's translucent status bar, which always shows a white clock, so the strip under it is solid ink in the light theme. If you would rather have a standard bar, change `apple-mobile-web-app-status-bar-style` back to `default` in `quartz/components/Head.tsx`.
 - **Inline footnotes** (`^[like this]`) are not rendered; standard `[^1]` footnotes are.
 
 ## Credits

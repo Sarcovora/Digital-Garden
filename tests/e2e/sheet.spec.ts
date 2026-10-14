@@ -103,3 +103,11 @@ test("dragging the sheet's title row down follows the finger, then dismisses pas
   await fire("pointerdown", y); await fire("pointermove", y + 140); await fire("pointerup", y + 140)
   await expect(sheet).toBeHidden()
 })
+
+test("the bottom buttons step aside while the sheet is open, so they do not ghost through it", async ({ page }) => {
+  await page.goto("/Long-Note")
+  await expect(page.locator("[data-dock]")).toHaveCSS("opacity", "1")
+  await page.locator("article sup.g-ref").first().click()
+  await expect(page.locator("[data-sheet]")).toBeVisible()
+  await expect(page.locator("[data-dock]")).toHaveCSS("opacity", "0")
+})

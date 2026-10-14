@@ -3,6 +3,8 @@ import { initLinks } from "./garden-links"
 import { labelFor, SyncStatus } from "./syncLabel"
 import { initSheet } from "./garden-sheet"
 import { classifySwipe } from "./swipe"
+import { pullProgress } from "./pull"
+import { haptic, Haptic } from "./haptics"
 
 const storage = () => {
   try { return window.localStorage } catch { return undefined }
@@ -116,8 +118,7 @@ document.addEventListener("nav", () => {
       return // keep the menu open so the result is visible
     }
     setOpen(false)
-    if (action === "search") document.querySelector<HTMLButtonElement>(".search-button")?.click()
-    else if (action === "back") goBack()
+    if (action === "back") goBack()
     else if (action === "backlinks") {
       const items = Array.from(document.querySelectorAll<HTMLAnchorElement>(".backlinks a")).map((a) => ({
         href: a.getAttribute("href") ?? "#", label: a.textContent ?? "",
@@ -138,7 +139,10 @@ document.addEventListener("nav", () => {
   let knownBuild: string | null = null
   let updated = false
   let pollTimer: ReturnType<typeof setTimeout> | undefined
+  let lastState = ""
   const renderSync = (st: SyncStatus & { buildId?: string | null }) => {
+    if (lastState === "building" && st.state !== "building") haptic(st.error ? "warn" : "success")
+    lastState = st.state
     if (knownBuild === null) knownBuild = st.buildId ?? ""
     if (st.state === "idle" && knownBuild !== (st.buildId ?? "")) updated = true
     if (updated && st.state === "idle") {
@@ -191,20 +195,59 @@ document.addEventListener("nav", () => {
     on(title, "touchcancel", cancelPress)
   }
 
+  // ---- haptics: one light tick on every control or link tap; controls can name their own (data-haptic) ----
+  on(document, "click", (e: Event) => {
+    const el = (e.target as Element | null)?.closest?.<HTMLElement>("[data-haptic], button, a[href], sup.g-ref")
+    if (!el || el.matches(".search-button, [disabled]")) return
+    haptic((el.dataset.haptic as Haptic) ?? "light")
+  })
+
+  // ---- pull down from the top to search ----
+  const pull = document.querySelector<HTMLElement>("[data-pull]")!
+  const pullLabel = pull.querySelector<HTMLElement>("[data-pull-label]")!
+  const searchOpen = () => !!document.querySelector(".search-container.active")
+  const pullBlocked = (target: EventTarget | null) =>
+    document.body.classList.contains("g-sheet-active") || !outline.hidden || searchOpen() ||
+    !!(target as Element | null)?.closest?.("pre, table, .katex-display, [data-sheet], [data-outline], .search-container")
+  const endPull = () => { pull.hidden = true; pull.dataset.ready = ""; pull.style.removeProperty("--pull") }
+  window.addCleanup(endPull)
+  let pulling: { startScrollY: number; startX: number; startY: number; x: number; y: number } | null = null
+  on(document, "touchmove", (e: any) => {
+    const t = e.changedTouches?.[0]
+    if (!pulling || !t) return
+    pulling.x = t.clientX; pulling.y = t.clientY
+    const p = pullProgress(pulling)
+    if (p <= 0.05) return void endPull()
+    if (p >= 1 && pull.hidden === false && pull.dataset.ready !== "1") haptic("select")
+    pull.dataset.ready = p >= 1 ? "1" : ""
+    pull.hidden = false
+    pull.style.setProperty("--pull", String(p))
+    pullLabel.textContent = p >= 1 ? "Release to search" : "Pull to search"
+  }, { passive: true })
+
   // ---- swipe back from the left edge ----
   let touch: { x: number; y: number; at: number; target: EventTarget | null } | null = null
   on(document, "touchstart", (e: any) => {
     const t = e.changedTouches?.[0]
     touch = t ? { x: t.clientX, y: t.clientY, at: Date.now(), target: e.target } : null
+    pulling = t && !pullBlocked(e.target) ? { startScrollY: window.scrollY, startX: t.clientX, startY: t.clientY, x: t.clientX, y: t.clientY } : null
   }, { passive: true })
   on(document, "touchend", (e: any) => {
     const start = touch
     touch = null
+    const pull0 = pulling
+    pulling = null
+    const hadHint = !pull.hidden
+    endPull()
     const t = e.changedTouches?.[0]
+    if (pull0 && t && hadHint) {
+      pull0.x = t.clientX; pull0.y = t.clientY
+      if (pullProgress(pull0) >= 1) { haptic("success"); return void document.querySelector<HTMLButtonElement>(".search-button")?.click() }
+    }
     if (!start || !t) return
     if (document.body.classList.contains("g-sheet-active")) return
     if ((start.target as Element | null)?.closest?.("pre, table, .katex-display, [data-sheet], [data-outline], .search-container")) return
-    if (classifySwipe({ startX: start.x, startY: start.y, endX: t.clientX, endY: t.clientY, ms: Date.now() - start.at }) === "back") goBack()
+    if (classifySwipe({ startX: start.x, startY: start.y, endX: t.clientX, endY: t.clientY, ms: Date.now() - start.at }) === "back") { haptic("light"); goBack() }
   })
 
   // ---- outline: a right-hand slide-out of the page's headings ----
@@ -240,6 +283,35 @@ document.addEventListener("nav", () => {
   }
   on(outlineBtn, "click", () => { setOpen(false); setOutline(outline.hidden || !outline.classList.contains("g-in")) })
   on(outlineScrim, "click", () => setOutline(false))
+  on(outline.querySelector("[data-outline-close]")!, "click", () => setOutline(false))
+  // Drag the header right to dismiss (the same follow-the-finger behaviour as the sheet, mirrored)
+  const outlineHead = outline.querySelector<HTMLElement>("[data-outline-head]")!
+  let dragX: number | null = null
+  let dragT = 0
+  let dragTicked = false
+  on(outlineHead, "pointerdown", (e: PointerEvent) => {
+    if ((e.target as Element).closest("[data-outline-close]")) return
+    dragX = e.clientX; dragT = e.timeStamp; dragTicked = false
+    outline.style.transition = "none"
+    try { outlineHead.setPointerCapture(e.pointerId) } catch {}
+  })
+  on(outlineHead, "pointermove", (e: PointerEvent) => {
+    if (dragX === null) return
+    const dx = Math.max(0, e.clientX - dragX)
+    outline.style.transform = `translateX(${dx}px)`
+    if (dx > 80 && !dragTicked) { dragTicked = true; haptic("select") }
+  })
+  const releaseOutline = (e: PointerEvent) => {
+    if (dragX === null) return
+    const dx = Math.max(0, e.clientX - dragX)
+    const fast = dx / Math.max(1, e.timeStamp - dragT) > 0.6
+    dragX = null
+    outline.style.transition = ""
+    outline.style.transform = ""
+    if (dx > 80 || (dx > 24 && fast)) setOutline(false)
+  }
+  on(outlineHead, "pointerup", releaseOutline)
+  on(outlineHead, "pointercancel", releaseOutline)
   on(document, "keydown", (e: KeyboardEvent) => { if (e.key === "Escape" && !outline.hidden) setOutline(false) })
   window.addCleanup(() => { outline.hidden = true; outline.classList.remove("g-in"); outlineScrim.hidden = true; outlineScrim.classList.remove("g-in") })
 

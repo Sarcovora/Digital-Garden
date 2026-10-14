@@ -66,38 +66,3 @@
   button:active, a:active { background: color-mix(in srgb, var(--garden-gilt) 22%, transparent); }
 }
 .g-list-meta { font-variant-numeric: tabular-nums; color: var(--garden-ink-2); font-size: 0.85em; }
-// The Quartz search element becomes a bottom-anchored ruled line on the home screen.
-.garden-home ~ .search,
-body[data-slug="index"] .search {
-  position: fixed;
-  left: 17px;
-  right: 17px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  z-index: 4;
-  max-width: none;
-  width: auto;
-  // an opaque strip, so list rows scrolling beneath the search line never overprint it
-  background: var(--garden-paper);
-  box-shadow: 0 -14px 14px -8px var(--garden-paper);
-  padding-top: 6px;
-  margin: 0 -17px; padding-left: 17px; padding-right: 17px; box-sizing: content-box;
-  .search-button {
-    width: 100%;
-    min-height: 48px;
-    background: transparent;
-    border: 0;
-    border-bottom: 1px solid var(--garden-ink);
-    border-radius: 0;
-    color: var(--garden-ink-2);
-    font-family: var(--garden-font-ui);
-    svg { display: none; }
-    p { margin: 0; text-align: left; font-size: 1rem; }
-  }
-}
-
-@media (min-width: 700px) {
-  body[data-slug="index"] .search {
-    left: calc((100vw - 40rem) / 2 + 17px);
-    right: calc((100vw - 40rem) / 2 + 17px);
-  }
-}

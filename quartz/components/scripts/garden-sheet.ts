@@ -1,4 +1,5 @@
 import { extractPassage } from "./passage"
+import { haptic } from "./haptics"
 
 export interface SheetOptions {
   title: string
@@ -137,9 +138,10 @@ export function initSheet() {
   let startY: number | null = null
   let startT = 0
   let lastDy = 0
+  let ticked = false
   on(head, "pointerdown", (e: PointerEvent) => {
     if ((e.target as Element).closest("[data-sheet-close]")) return
-    startY = e.clientY; startT = e.timeStamp; lastDy = 0
+    startY = e.clientY; startT = e.timeStamp; lastDy = 0; ticked = false
     sheet.style.transition = "none"
     try { head.setPointerCapture(e.pointerId) } catch {}
   })
@@ -147,6 +149,7 @@ export function initSheet() {
     if (startY === null) return
     lastDy = Math.max(0, e.clientY - startY)
     sheet.style.transform = `translateY(${lastDy}px)`
+    if (lastDy > 80 && !ticked) { ticked = true; haptic("select") } // you have pulled far enough: it will go
   })
   const release = (e: PointerEvent) => {
     if (startY === null) return
