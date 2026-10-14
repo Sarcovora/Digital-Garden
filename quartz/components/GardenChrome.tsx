@@ -31,20 +31,23 @@ const GardenChrome: QuartzComponent = () => (
     </button>
   </div>
   <div class="g-dock" data-dock>
-  <button type="button" class="g-outline-toggle" data-outline-toggle aria-label="Outline" aria-expanded="false" hidden>
-    <span aria-hidden="true"></span>
-  </button>
   <a href="/" class="g-home-toggle" data-home-button aria-label="Home">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg>
   </a>
+  <button type="button" class="g-outline-toggle" data-outline-toggle aria-label="Outline" aria-expanded="false" hidden>
+    <span aria-hidden="true"></span>
+  </button>
   </div>
   <div class="g-outline-scrim" data-outline-scrim hidden></div>
   <nav class="g-outline" data-outline aria-label="Outline of this page" hidden>
-    <div class="g-outline-head" data-outline-head>
-      <span class="g-outline-title">Outline</span>
-      <button type="button" class="g-outline-close" data-outline-close>Close</button>
+    <div class="g-outline-edge" data-outline-edge aria-hidden="true"></div>
+    <div class="g-outline-scroll">
+      <div class="g-outline-head" data-outline-head>
+        <span class="g-outline-title">Outline</span>
+        <button type="button" class="g-outline-close" data-outline-close>Close</button>
+      </div>
+      <ul data-outline-list></ul>
     </div>
-    <ul data-outline-list></ul>
   </nav>
   <div class="g-scrim" data-sheet-scrim hidden></div>
   <div class="g-sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="g-sheet-title" hidden>

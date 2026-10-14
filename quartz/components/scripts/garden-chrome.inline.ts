@@ -209,7 +209,7 @@ document.addEventListener("nav", () => {
   const pullBlocked = (target: EventTarget | null) =>
     document.body.classList.contains("g-sheet-active") || !outline.hidden || searchOpen() ||
     !!(target as Element | null)?.closest?.("pre, table, .katex-display, [data-sheet], [data-outline], .search-container")
-  const endPull = () => { pull.hidden = true; pull.dataset.ready = ""; pull.style.removeProperty("--pull") }
+  const endPull = () => { pull.hidden = true; pull.dataset.third = "0"; pull.style.removeProperty("--pull") }
   window.addCleanup(endPull)
   let pulling: { startScrollY: number; startX: number; startY: number; x: number; y: number } | null = null
   on(document, "touchmove", (e: any) => {
@@ -218,8 +218,10 @@ document.addEventListener("nav", () => {
     pulling.x = t.clientX; pulling.y = t.clientY
     const p = pullProgress(pulling)
     if (p <= 0.05) return void endPull()
-    if (p >= 1 && pull.hidden === false && pull.dataset.ready !== "1") haptic("select")
-    pull.dataset.ready = p >= 1 ? "1" : ""
+    // a tick each time the pull passes another third, like a detent; the last one means "release now"
+    const third = Math.floor(p * 3 + 1e-9)
+    if (third > Number(pull.dataset.third || 0)) haptic("select")
+    pull.dataset.third = String(third)
     pull.hidden = false
     pull.style.setProperty("--pull", String(p))
     pullLabel.textContent = p >= 1 ? "Release to search" : "Pull to search"
@@ -284,23 +286,11 @@ document.addEventListener("nav", () => {
   on(outlineBtn, "click", () => { setOpen(false); setOutline(outline.hidden || !outline.classList.contains("g-in")) })
   on(outlineScrim, "click", () => setOutline(false))
   on(outline.querySelector("[data-outline-close]")!, "click", () => setOutline(false))
-  // Drag the header right to dismiss (the same follow-the-finger behaviour as the sheet, mirrored)
-  const outlineHead = outline.querySelector<HTMLElement>("[data-outline-head]")!
+  // Drag right to dismiss, from the header or from anywhere along the panel's left edge (the same
+  // follow-the-finger behaviour as the sheet, mirrored)
   let dragX: number | null = null
   let dragT = 0
   let dragTicked = false
-  on(outlineHead, "pointerdown", (e: PointerEvent) => {
-    if ((e.target as Element).closest("[data-outline-close]")) return
-    dragX = e.clientX; dragT = e.timeStamp; dragTicked = false
-    outline.style.transition = "none"
-    try { outlineHead.setPointerCapture(e.pointerId) } catch {}
-  })
-  on(outlineHead, "pointermove", (e: PointerEvent) => {
-    if (dragX === null) return
-    const dx = Math.max(0, e.clientX - dragX)
-    outline.style.transform = `translateX(${dx}px)`
-    if (dx > 80 && !dragTicked) { dragTicked = true; haptic("select") }
-  })
   const releaseOutline = (e: PointerEvent) => {
     if (dragX === null) return
     const dx = Math.max(0, e.clientX - dragX)
@@ -310,8 +300,22 @@ document.addEventListener("nav", () => {
     outline.style.transform = ""
     if (dx > 80 || (dx > 24 && fast)) setOutline(false)
   }
-  on(outlineHead, "pointerup", releaseOutline)
-  on(outlineHead, "pointercancel", releaseOutline)
+  for (const handle of [outline.querySelector<HTMLElement>("[data-outline-head]")!, outline.querySelector<HTMLElement>("[data-outline-edge]")!]) {
+    on(handle, "pointerdown", (e: PointerEvent) => {
+      if ((e.target as Element).closest("[data-outline-close]")) return
+      dragX = e.clientX; dragT = e.timeStamp; dragTicked = false
+      outline.style.transition = "none"
+      try { handle.setPointerCapture(e.pointerId) } catch {}
+    })
+    on(handle, "pointermove", (e: PointerEvent) => {
+      if (dragX === null) return
+      const dx = Math.max(0, e.clientX - dragX)
+      outline.style.transform = `translateX(${dx}px)`
+      if (dx > 80 && !dragTicked) { dragTicked = true; haptic("select") }
+    })
+    on(handle, "pointerup", releaseOutline)
+    on(handle, "pointercancel", releaseOutline)
+  }
   on(document, "keydown", (e: KeyboardEvent) => { if (e.key === "Escape" && !outline.hidden) setOutline(false) })
   window.addCleanup(() => { outline.hidden = true; outline.classList.remove("g-in"); outlineScrim.hidden = true; outlineScrim.classList.remove("g-in") })
 

@@ -167,7 +167,7 @@ test("the menu button is at the top right and stays there while scrolling; the p
   const dock = (await page.locator("[data-dock]").boundingBox())!
   expect(last).toBeLessThan(dock.y) // the final line of the page sits above the bottom buttons
 })
-test("Home and Outline sit together at the bottom right (thumb reach), always on screen, and are not at the top", async ({ page }) => {
+test("Home (in the corner) and Outline (beside it) sit together at the bottom right (thumb reach), always on screen, and are not at the top", async ({ page }) => {
   await page.goto("/Long-Note")
   const vp = page.viewportSize()!
   for (const sel of ["[data-home-button]", "[data-outline-toggle]"]) {
@@ -178,7 +178,7 @@ test("Home and Outline sit together at the bottom right (thumb reach), always on
   }
   const home = (await page.locator("[data-home-button]").boundingBox())!
   const outline = (await page.locator("[data-outline-toggle]").boundingBox())!
-  expect(outline.x).toBeGreaterThan(home.x) // outline takes the corner, Home beside it
+  expect(home.x).toBeGreaterThan(outline.x) // Home takes the corner, Outline beside it
   await page.evaluate(() => window.scrollTo({ top: 900, behavior: "instant" }))
   await expect(page.locator("[data-home-button]")).toBeInViewport()
   await expect(page.locator("[data-outline-toggle]")).toBeInViewport()
@@ -358,5 +358,23 @@ test("the outline panel has a Close button, drags right to dismiss like the shee
   await expect(panel).toBeVisible()
   expect(await panel.evaluate((el) => (el as HTMLElement).style.transform)).toBe("")
   await fire("pointerdown", x); await fire("pointermove", x + 150); await fire("pointerup", x + 150)
+  await expect(panel).toBeHidden()
+})
+
+test("the outline panel can be dragged away from anywhere along its left edge, not just the header", async ({ page }) => {
+  await page.goto("/Long-Note")
+  const panel = page.locator("[data-outline]")
+  await page.locator("[data-outline-toggle]").click()
+  await expect(panel).toBeVisible()
+  const pb = (await panel.boundingBox())!
+  expect(await page.locator("[data-outline-edge]").evaluate((e) => ({ w: (e as HTMLElement).offsetWidth, h: (e as HTMLElement).offsetHeight }))).toEqual({ w: expect.any(Number), h: Math.round(pb.height) })
+  expect(await page.locator("[data-outline-edge]").evaluate((e) => (e as HTMLElement).offsetWidth)).toBeGreaterThanOrEqual(24)
+  const x = pb.x + 8, y = pb.y + pb.height * 0.6 // low on the panel, far from the header
+  const fire = (type: string, cx: number) => page.evaluate(({ type, cx, y }) => document.querySelector("[data-outline-edge]")!.dispatchEvent(new PointerEvent(type, { clientX: cx, clientY: y, pointerId: 11, bubbles: true })), { type, cx, y })
+  await fire("pointerdown", x); await fire("pointermove", x + 40)
+  expect(await panel.evaluate((el) => (el as HTMLElement).style.transform)).toContain("40px")
+  await fire("pointerup", x + 40)
+  await expect(panel).toBeVisible()
+  await fire("pointerdown", x); await fire("pointermove", x + 160); await fire("pointerup", x + 160)
   await expect(panel).toBeHidden()
 })

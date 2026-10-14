@@ -288,9 +288,7 @@ body[data-slug="404"] [data-action="pin"] { display: none; }
   z-index: 30;
   box-sizing: border-box;
   width: min(82vw, 320px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: calc(64px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
   background: var(--garden-onionskin);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -311,6 +309,18 @@ body[data-slug="404"] [data-action="pin"] { display: none; }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .g-outline { background: var(--garden-paper); }
+}
+.g-outline-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(64px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+}
+// A strip down the panel's whole left side: drag it right from anywhere to dismiss.
+.g-outline-edge {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 28px; z-index: 1;
+  touch-action: none;
 }
 .g-outline-head {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;

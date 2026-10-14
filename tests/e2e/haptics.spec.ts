@@ -36,7 +36,7 @@ test("following a reference numeral ticks", async ({ page }) => {
   await page.locator("article sup.g-ref").first().click()
   expect(await ticks(page)).toBeGreaterThanOrEqual(1)
 })
-test("the pull-down that opens search ends with a success tick, and not a second tap tick", async ({ page }) => {
+test("pulling to search ticks as it passes each third and ends with a success tick, not a second tap tick", async ({ page }) => {
   await counting(page)
   await page.goto("/Long-Note")
   await page.evaluate(() => {
@@ -45,8 +45,8 @@ test("the pull-down that opens search ends with a success tick, and not a second
     fire("touchstart", 200); fire("touchmove", 260); fire("touchmove", 340); fire("touchend", 340)
   })
   await expect(page.locator(".search-container")).toHaveClass(/active/)
-  // one "select" tick when the pull becomes ready, then the two-tick success when search opens
-  await expect.poll(() => ticks(page)).toBe(3)
+  // a tick each time the pull passes a third (here two moves: 67% and ready), then the two-tick success when search opens
+  await expect.poll(() => ticks(page)).toBe(4)
 })
 test("with haptics switched off in storage nothing ticks", async ({ page }) => {
   await counting(page)
