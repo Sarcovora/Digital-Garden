@@ -12,6 +12,9 @@ const isNote = () => { const s = slugNow(); return !!s && s !== "index" && s !==
 // Offline reading: register once per page load (the worker file is stamped per build).
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-worker.js").catch(() => {})
 
+// iOS only applies :active (the pressed look) when something is listening for touches.
+document.addEventListener("touchstart", () => {}, { passive: true })
+
 // How many in-app pages deep we are: back at depth 1 means "go home", not "leave the app".
 let depth = 0
 let popped = false
@@ -25,7 +28,7 @@ const goBack = () => {
   const body = document.getElementById("quartz-body")
   if (!body || reduced()) return history.back()
   body.classList.add("g-leaving")
-  setTimeout(() => { body.classList.remove("g-leaving"); history.back() }, 180)
+  setTimeout(() => { body.classList.remove("g-leaving"); history.back() }, 120)
 }
 ;(window as any).gardenBack = goBack
 
@@ -232,7 +235,7 @@ document.addEventListener("nav", () => {
     else {
       outline.classList.remove("g-in"); outlineScrim.classList.remove("g-in")
       const done = () => { outline.hidden = true; outlineScrim.hidden = true }
-      reduced() ? done() : setTimeout(done, 180)
+      reduced() ? done() : setTimeout(done, 120)
     }
   }
   on(outlineBtn, "click", () => { setOpen(false); setOutline(outline.hidden || !outline.classList.contains("g-in")) })

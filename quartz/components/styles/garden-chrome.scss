@@ -142,7 +142,7 @@ sup.g-ref {
   -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--garden-gilt);
   transform: translateY(100%);
-  transition: transform 0.18s ease;
+  transition: transform 0.12s ease;
   &.g-sheet-in { transform: translateY(0); }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -185,7 +185,7 @@ sup.g-ref {
 
 // Swipe-back: a short flat page slide (about 180 ms, no springs).
 #quartz-body {
-  transition: transform 0.18s ease, opacity 0.18s ease;
+  transition: transform 0.12s ease, opacity 0.12s ease;
   &.g-leaving { transform: translateX(24px); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -258,7 +258,7 @@ body[data-slug="404"] [data-action="pin"] { display: none; }
   box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
   font-family: var(--garden-font-ui);
   transform: translateX(100%);
-  transition: transform 0.18s ease;
+  transition: transform 0.12s ease;
   &[hidden] { display: none; }
   &.g-in { transform: translateX(0); }
   ul { list-style: none; margin: 0; padding: 0; }

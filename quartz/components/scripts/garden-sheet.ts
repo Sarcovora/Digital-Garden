@@ -39,7 +39,7 @@ export function initSheet() {
     sheet.style.transform = ""
     document.body.classList.remove("g-sheet-active")
     const done = () => { sheet.hidden = true; scrim.hidden = true }
-    matchMedia("(prefers-reduced-motion: reduce)").matches ? done() : setTimeout(done, 180)
+    matchMedia("(prefers-reduced-motion: reduce)").matches ? done() : setTimeout(done, 120)
     invoker?.focus()
     invoker = null
   }

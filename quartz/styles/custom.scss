@@ -183,3 +183,21 @@ input, textarea { caret-color: var(--garden-oxblood); accent-color: var(--garden
 
 // No double-tap-to-zoom (it delays taps and fires by accident on dense text); pinch zoom still works.
 html, body, a, button, summary, label, input, article p, article li { touch-action: manipulation; }
+
+// Instant touch feedback: iOS's default grey flash is replaced by a pressed state we control, with no transition.
+html { -webkit-tap-highlight-color: transparent; }
+.g-actions button:active,
+.g-size button:active,
+.g-list a:active,
+.g-list button:active,
+.g-outline a:active,
+.g-thumb:active,
+.g-sync-panel button:active,
+.home-list a:active,
+[data-garden-home] li a:active { background: color-mix(in srgb, var(--garden-gilt) 22%, transparent); transition: none; }
+.g-toggle:active, .g-outline-toggle:active { background: color-mix(in srgb, var(--garden-gilt) 30%, var(--garden-paper)); transition: none; }
+sup.g-ref:active { background: color-mix(in srgb, var(--garden-oxblood) 18%, transparent); }
+
+// iOS zooms the whole page when a focused field's text is under 16px, and leaves it zoomed afterwards.
+// max() keeps fields at least 16px even when the reader has shrunk the text size.
+html body input, html body textarea, html body select { font-size: max(16px, 1rem) !important; }

@@ -220,3 +220,28 @@ test("text size steps up and down, persists across pages, and spans 25% to 200%"
   expect(box!.height).toBeGreaterThanOrEqual(44)
   expect(await smaller.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(15)
 })
+
+test("buttons show a pressed state the instant a finger lands, before the tap completes", async ({ page }) => {
+  await page.goto("/Alpha-Note")
+  await openMenu(page)
+  const btn = page.locator('[data-action="search"]')
+  const bg = () => btn.evaluate((el) => getComputedStyle(el).backgroundColor)
+  const before = await bg()
+  const b = await btn.boundingBox()
+  await page.mouse.move(b!.x + 10, b!.y + 10)
+  await page.mouse.down()
+  expect(await bg()).not.toBe(before)
+  await page.mouse.up({ button: "left" })
+  const tap = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("-webkit-tap-highlight-color"))
+  expect(tap.replace(/\s/g, "")).toMatch(/rgba\(0,0,0,0\)|transparent/)
+})
+
+test("the search field is at least 16px so iOS does not zoom the page on focus, at any text size", async ({ page }) => {
+  await page.goto("/Alpha-Note")
+  await openMenu(page)
+  await page.locator('[data-action="search"]').click()
+  const size = () => page.locator(".search-bar").evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
+  expect(await size()).toBeGreaterThanOrEqual(16)
+  await page.evaluate(() => (window as any).gardenSetScale(0.25))
+  expect(await size()).toBeGreaterThanOrEqual(16)
+})
