@@ -139,9 +139,10 @@ npm test                # 150+ unit tests (state, sync service, build helpers)
 npm run test:build      # Quartz builds of a fixture vault, checked for fidelity
 npm run test:e2e        # iPhone WebKit tests against a built fixture site
 npm run screenshots     # rebuild docs/images from examples/demo-vault
+scripts/deploy.sh       # rsync to the server, rebuild, force a site build, verify what is served
 ```
 
-The tests run against a small synthetic vault in [`tests/fixture-vault`](tests/fixture-vault); no real notes are ever used in tests or screenshots. CI runs everything on every push.
+The tests run against a small synthetic vault in [`tests/fixture-vault`](tests/fixture-vault); no real notes are ever used in tests or screenshots. CI runs everything on every push. Contributor and maintainer notes: [`CLAUDE.md`](CLAUDE.md), [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/maintenance.md`](docs/maintenance.md).
 
 ## Good to know
 
